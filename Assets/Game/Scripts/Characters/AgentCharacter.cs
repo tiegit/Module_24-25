@@ -8,21 +8,24 @@ public class AgentCharacter : MonoBehaviour, ICharacter
     [SerializeField] private float _injuredMoveSpeed;
     [SerializeField] private float _rotationSpeed;
 
-    [SerializeField] private Transform _target;
+    [SerializeField] private float _jumpSpeed;
+    [SerializeField] private AnimationCurve _jumpCurve;
+    //[SerializeField] private Transform _target;
 
     private NavMeshAgent _agent;
 
     private AgentMover _mover;
     private TransformDirectionalRotator _rotator;
+    private AgentJumper _jumper;
 
     private bool _isDead;
-    private float _currentSpeed;
 
     public float MaxSpeed => _maxMoveSpeed;
     public float InjuredMoveSpeed => _injuredMoveSpeed;
 
     public Vector3 CurrentVelocity => _mover.CurrentVelocity;
     public Quaternion CurrentRotation => _rotator.CurrentRotation;
+    public bool InJumpProcess => _jumper.InProcess;
 
     private void Awake()
     {
@@ -31,15 +34,12 @@ public class AgentCharacter : MonoBehaviour, ICharacter
 
         _mover = new AgentMover(_agent, _maxMoveSpeed);
         _rotator = new TransformDirectionalRotator(transform, _rotationSpeed);
+        _jumper = new AgentJumper(this, _agent, _jumpSpeed, _jumpCurve);
     }
 
     private void Update() => _rotator.Update(Time.deltaTime);
 
-    public void SetMoveSpeed(float speed)
-    {
-        _currentSpeed = speed;
-        _mover.SetMoveSpeed(speed);
-    }
+    public void SetMoveSpeed(float speed) => _mover.SetMoveSpeed(speed);
 
     public void SetDeathState(bool isDead)
     {
@@ -64,4 +64,26 @@ public class AgentCharacter : MonoBehaviour, ICharacter
 
     public bool TryGetPath(Vector3 targetPosition, NavMeshPath pathToTarget)
         => NavMeshUtils.TryGetPath(_agent, targetPosition, pathToTarget);
+
+    public bool IsOnMeshLink(out OffMeshLinkData offMeshLinkData)
+    {
+        if(_agent.isOnOffMeshLink)
+        {
+            offMeshLinkData = _agent.currentOffMeshLinkData;
+
+            return true;
+        }
+
+        offMeshLinkData = default(OffMeshLinkData);
+
+        return false;
+    }
+
+    public void Jump(OffMeshLinkData offMeshLinkData)
+    {
+        if (_isDead)
+            return;
+
+        _jumper.Jump(offMeshLinkData);
+    }
 }

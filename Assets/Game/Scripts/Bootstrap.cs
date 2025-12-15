@@ -65,7 +65,7 @@ public class Bootstrap : MonoBehaviour
         _enemyCharacterController.Enable();
         _enemyCharacterView.Initialize(_enemyCharacter);
 
-        _agentEnemyCharacterController = new AgentCharacterAgroController(_agentEnemyCharacter, _character.transform, 20, 2, 1);
+        _agentEnemyCharacterController = new AgentCharacterAgroController(_agentEnemyCharacter, _character.transform, 100, 2, 1);
 
         _agentEnemyCharacterController.Enable();
 

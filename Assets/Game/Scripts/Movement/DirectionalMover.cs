@@ -9,6 +9,7 @@ public abstract class DirectionalMover
     private Vector3 _gravityVelocity = Vector3.zero;
 
     private Vector3 _currentDirection;
+    private bool _isGravityActive;
     private bool _isStopped;
 
     public DirectionalMover(float moveSpeed, ObstacleChecker groundChecker, float gravityForce)
@@ -16,12 +17,17 @@ public abstract class DirectionalMover
         MoveSpeed = moveSpeed;
         _groundChecker = groundChecker;
         _gravityForce = gravityForce;
+
+        ToggleGravity(true);
     }
+
+    //public Vector3 CurrentVelocity => _currentDirection.normalized * MoveSpeed;
+    public Vector3 CurrentHorizontalVelocity { get; protected set; }
 
     public void Update(float deltaTime)
     {
-        if (_groundChecker.IsTouches())
-            _gravityVelocity.y = 0;
+        if (_groundChecker.IsTouches() || _isGravityActive == false)
+            _gravityVelocity.y = 0f;
         else
             _gravityVelocity.y -= _gravityForce;
 
@@ -40,13 +46,11 @@ public abstract class DirectionalMover
 
     protected abstract void ApplyVelocity(Vector3 velocity, float deltaTime);
 
-    //public Vector3 CurrentVelocity => _currentDirection.normalized * MoveSpeed;
-
-    public Vector3 CurrentHorizontalVelocity { get; protected set; }
-
     public void SetInputDirection(Vector3 inputDirection) => _currentDirection = inputDirection;
 
     public void SetMoveSpeed(float speed) => MoveSpeed = speed;
+
+    public void ToggleGravity(bool value) => _isGravityActive = value;
 
     public void Stop() => _isStopped = true;
 

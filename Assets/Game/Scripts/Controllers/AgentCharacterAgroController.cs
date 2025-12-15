@@ -32,6 +32,17 @@ public class AgentCharacterAgroController : Controller
     {
         _idleTimer -= deltaTime;
 
+        if(_character.IsOnMeshLink(out OffMeshLinkData offMeshLinkData))
+        {
+            if(_character.InJumpProcess == false)
+            {
+                _character.SetRotationDirection(offMeshLinkData.endPos - offMeshLinkData.startPos);
+                _character.Jump(offMeshLinkData);
+            }
+
+            return;
+        }
+
         _character.SetRotationDirection(_character.CurrentVelocity);
 
         if (_character.TryGetPath(_target.position, _pathToTarget))
