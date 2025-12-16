@@ -9,8 +9,5 @@ public class AlongMovableVelocityRotatableController : Controller
         _rotatable = rotatable;
     }
 
-    protected override void UpdateLogic(float deltaTime)
-    {
-        _rotatable.SetRotationDirection(_movable.CurrentHorizontalVelocity);
-    }
+    protected override void UpdateLogic(float deltaTime) => _rotatable.SetRotationDirection(_movable.CurrentHorizontalVelocity);
 }

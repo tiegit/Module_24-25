@@ -3,6 +3,8 @@ using UnityEngine.AI;
 
 public class DirectionalMovableAutoPatrolController : Controller
 {
+    private const float MinEdgeDistance = 0.5f;
+    private const int MaxAttempts = 10;
     private const int MinCornersCountInPathToMove = 2;
     private const int StartCornerIndex = 0;
     private const int TargetCornerIndex = 1;
@@ -19,7 +21,6 @@ public class DirectionalMovableAutoPatrolController : Controller
     private Vector3 _currentPatrolPoint = Vector3.zero;
     private NavMeshPath _pathToTarget = new NavMeshPath();
     private float _idleTimer;
-    private float _currentTargetTime;
     private Vector3 _previousPosition;
     private float _stuckTimer;
 
@@ -42,7 +43,6 @@ public class DirectionalMovableAutoPatrolController : Controller
     protected override void UpdateLogic(float deltaTime)
     {
         _idleTimer -= Time.deltaTime;
-        _currentTargetTime += Time.deltaTime;
 
         CheckIfStuck();
 
@@ -110,20 +110,28 @@ public class DirectionalMovableAutoPatrolController : Controller
 
         _previousPosition = _movable.Position;
     }
-
     private void GenerateNewPatrolPoint()
     {
-        Vector2 randomCircle = Random.insideUnitCircle * _patrolRadius;
-        Vector3 randomOffset = new Vector3(randomCircle.x, 0, randomCircle.y);
-        Vector3 potentialPoint = _movable.Position + randomOffset;
-
-        if (NavMesh.SamplePosition(potentialPoint, out NavMeshHit hit, _patrolRadius, _queryFilter.areaMask))
+        for (int i = 0; i < MaxAttempts; i++)
         {
-            _currentPatrolPoint = hit.position;
-            _currentTargetTime = 0f;
-            _stuckTimer = 0f;
+            Vector2 randomCircle = Random.insideUnitCircle * _patrolRadius;
+            Vector3 randomOffset = new Vector3(randomCircle.x, 0, randomCircle.y);
+            Vector3 potentialPoint = _movable.Position + randomOffset;
 
-            UpdatePatrolPointVisualization();
+            if (NavMesh.SamplePosition(potentialPoint, out NavMeshHit hit, _patrolRadius, _queryFilter.areaMask))
+            {
+                if (NavMesh.FindClosestEdge(hit.position, out NavMeshHit edgeHit, _queryFilter.areaMask))
+                {
+                    if (edgeHit.distance >= MinEdgeDistance)
+                    {
+                        _currentPatrolPoint = hit.position;
+                        _stuckTimer = 0f;
+                        UpdatePatrolPointVisualization();
+
+                        return;
+                    }
+                }
+            }
         }
     }
 

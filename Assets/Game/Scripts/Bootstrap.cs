@@ -48,7 +48,7 @@ public class Bootstrap : MonoBehaviour
         var patrolPointPrefabInstance = Instantiate(_patrolPointPrefab);
 
         DirectionalMovableAutoPatrolController playerAutoPatrolController = 
-            new DirectionalMovableAutoPatrolController(_character, queryFilter, 15f, 0.5f, 0.2f, patrolPointPrefabInstance);
+            new DirectionalMovableAutoPatrolController(_character, queryFilter, 2f, 0.5f, 0.2f, patrolPointPrefabInstance);
 
         _characterController = new CompositeController(playerMoveController,
                                                        /*new PlayerDirectionalMovableController(playerInput, _character),*/

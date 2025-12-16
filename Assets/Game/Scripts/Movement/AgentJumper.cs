@@ -22,6 +22,7 @@ public class AgentJumper
     }
 
     public bool InProcess => _jumpProcess != null;
+    public float Duration { get; private set; }
 
     public void Jump(OffMeshLinkData offMeshLinkData)
     {
@@ -36,15 +37,15 @@ public class AgentJumper
         Vector3 startPosition = offMeshLinkData.startPos;
         Vector3 endPosition = offMeshLinkData.endPos;
 
-        float duration = Vector3.Distance(startPosition, endPosition) / _speed;
+        Duration = Vector3.Distance(startPosition, endPosition) / _speed;
 
         float progress = 0f;
 
-        while (progress < duration)
+        while (progress < Duration)
         {
-            float yOffset = _yOffsetCurve.Evaluate(progress / duration);
+            float yOffset = _yOffsetCurve.Evaluate(progress / Duration);
 
-            _agent.transform.position = Vector3.Lerp(startPosition, endPosition, progress / duration) + Vector3.up * yOffset;
+            _agent.transform.position = Vector3.Lerp(startPosition, endPosition, progress / Duration) + Vector3.up * yOffset;
             progress += Time.deltaTime;
 
             yield return null;

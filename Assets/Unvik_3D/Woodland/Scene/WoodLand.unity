@@ -588,36 +588,36 @@ MonoBehaviour:
   _maxMoveSpeed: 6
   _injuredMoveSpeed: 3
   _rotationSpeed: 900
-  _jumpSpeed: 15
+  _jumpSpeed: 12
   _jumpCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
       value: 0
-      inSlope: 14.045297
-      outSlope: 14.045297
+      inSlope: 7.5087357
+      outSlope: 7.5087357
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.03491196
+      outWeight: 0.033391926
     - serializedVersion: 3
-      time: 0.75
-      value: 3
-      inSlope: -4
-      outSlope: -4
-      tangentMode: 34
+      time: 0.49999982
+      value: 2.0148287
+      inSlope: -0.0693264
+      outSlope: -0.0693264
+      tangentMode: 0
       weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
+      inWeight: 0.09314559
+      outWeight: 0.09866714
     - serializedVersion: 3
       time: 1
       value: 0
-      inSlope: -17.843437
-      outSlope: -17.843437
+      inSlope: -5.9442973
+      outSlope: -5.9442973
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.07363254
+      inWeight: 0.06249996
       outWeight: 0
     m_PreInfinity: 0
     m_PostInfinity: 1
@@ -6964,7 +6964,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0476b1acfe1f984490433fce4c232f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxMoveSpeed: 0
+  _maxMoveSpeed: 8
   _injuredMoveSpeed: 5
   _rotationSpeed: 900
   _groundChecker: {fileID: 1905199000}

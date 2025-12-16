@@ -36,7 +36,9 @@ public class AgentCharacterAgroController : Controller
         {
             if(_character.InJumpProcess == false)
             {
-                _character.SetRotationDirection(offMeshLinkData.endPos - offMeshLinkData.startPos);
+                Vector3 rotation = new Vector3((offMeshLinkData.endPos - offMeshLinkData.startPos).x, _character.CurrentRotation.y, (offMeshLinkData.endPos - offMeshLinkData.startPos).z);
+
+                _character.SetRotationDirection(rotation);
                 _character.Jump(offMeshLinkData);
             }
 

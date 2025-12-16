@@ -26,6 +26,8 @@ public class Health : MonoBehaviour, IDamagable
 
     public void TakeDamage(float value)
     {        
+        _charecter.StopMove();
+
         ChangeHealth(-value);
 
         _damageAnimator.TakeDamage();
@@ -35,8 +37,6 @@ public class Health : MonoBehaviour, IDamagable
             _damageAnimator.SetInjuredLayer();
             _charecter.SetMoveSpeed(_charecter.InjuredMoveSpeed);
         }
-
-        _charecter.StopMove();
     }
 
     private void ChangeHealth(float value)

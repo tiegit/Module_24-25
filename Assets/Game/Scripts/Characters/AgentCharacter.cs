@@ -26,6 +26,7 @@ public class AgentCharacter : MonoBehaviour, ICharacter
     public Vector3 CurrentVelocity => _mover.CurrentVelocity;
     public Quaternion CurrentRotation => _rotator.CurrentRotation;
     public bool InJumpProcess => _jumper.InProcess;
+    public float JumpDuration => _jumper.Duration;
 
     private void Awake()
     {
