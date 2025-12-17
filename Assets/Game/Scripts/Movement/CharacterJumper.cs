@@ -1,23 +1,22 @@
 ﻿using System.Collections;
 using UnityEngine;
-using UnityEngine.AI;
 
-public class AgentJumper
+public class CharacterJumper
 {
     private MonoBehaviour _coroutineRunner;
-    private NavMeshAgent _agent;
+    private Rigidbody _rigidbody;
     private float _speed;
     private AnimationCurve _yOffsetCurve;
 
     private Coroutine _jumpProcess;
 
-    public AgentJumper(MonoBehaviour coroutineRunner,
-                       NavMeshAgent agent,
+    public CharacterJumper(MonoBehaviour coroutineRunner,
+                       Rigidbody rigidbody,
                        float speed,
                        AnimationCurve yOffsetCurve)
     {
         _coroutineRunner = coroutineRunner;
-        _agent = agent;
+        _rigidbody = rigidbody;
         _speed = speed;
         _yOffsetCurve = yOffsetCurve;
     }
@@ -25,19 +24,16 @@ public class AgentJumper
     public bool InProcess => _jumpProcess != null;
     public float Duration { get; private set; }
 
-    public void Jump(OffMeshLinkData offMeshLinkData)
+    public void Jump(Vector3 startPosition, Vector3 endPosition)
     {
         if (InProcess)
             return;
 
-        _jumpProcess = _coroutineRunner.StartCoroutine(JumpProcess(offMeshLinkData));
+        _jumpProcess = _coroutineRunner.StartCoroutine(JumpProcess(startPosition, endPosition));
     }
 
-    private IEnumerator JumpProcess(OffMeshLinkData offMeshLinkData)
+    private IEnumerator JumpProcess(Vector3 startPosition, Vector3 endPosition)
     {
-        Vector3 startPosition = offMeshLinkData.startPos;
-        Vector3 endPosition = offMeshLinkData.endPos;
-
         Duration = Vector3.Distance(startPosition, endPosition) / _speed;
 
         float progress = 0f;
@@ -46,14 +42,15 @@ public class AgentJumper
         {
             float yOffset = _yOffsetCurve.Evaluate(progress / Duration);
 
-            _agent.transform.position = Vector3.Lerp(startPosition, endPosition, progress / Duration) + Vector3.up * yOffset;
-            
+            Vector3 newPosition = Vector3.Lerp(startPosition, endPosition, progress / Duration) + Vector3.up * yOffset;
+
+            _rigidbody.MovePosition(newPosition);
+
             progress += Time.deltaTime;
 
             yield return null;
         }
 
-        _agent.CompleteOffMeshLink();
         _jumpProcess = null;
     }
 }

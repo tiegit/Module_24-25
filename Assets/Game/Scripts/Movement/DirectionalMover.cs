@@ -28,7 +28,7 @@ public abstract class DirectionalMover
     {
         if (_groundChecker.IsTouches() || _isGravityActive == false)
             _gravityVelocity.y = 0f;
-        else
+        else if (_groundChecker.IsTouches() == false)
             _gravityVelocity.y -= _gravityForce;
 
         if (_isStopped)
@@ -56,7 +56,6 @@ public abstract class DirectionalMover
             return;
 
         _isGravityActive = value;
-        Debug.Log($"{_isGravityActive}");
     }
 
     public void Stop() => _isStopped = true;

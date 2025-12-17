@@ -5,7 +5,7 @@ using UnityEngine.AI;
 
 public class ClickToMoveController : Controller, IPointerTargetOwner
 {
-    private const float DeltaDistance = 0.5f;
+    private const float DeltaDistance = 1f;
 
     private Character _movable;
     private NavMeshQueryFilter _queryFilter;
@@ -20,6 +20,8 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
     private bool _wasOnLink;
     private Vector3 _globalStart;
     private Vector3 _globalEnd;
+    private float _currentLinkHalfWidth;
+    private bool _isJumping;
 
     public ClickToMoveController(PlayerInput playerInput,
                                 Character movable,
@@ -38,20 +40,26 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
 
     protected override void UpdateLogic(float deltaTime)
     {
+        _inputHandler.Update();
+
+        if (_isJumping && Vector3.Distance(_movable.Position, _globalEnd) < DeltaDistance)
+            StopJump();
+
+        bool isOnLink = IsOnNavMeshLink(_movable.Position);
+
+        if (isOnLink != _wasOnLink)
+            _wasOnLink = isOnLink;
+
+        if (isOnLink && !_isJumping && Vector3.Distance(_movable.Position, _globalStart) < DeltaDistance * _currentLinkHalfWidth
+          && NavMesh.SamplePosition(_movable.Position, out _, DeltaDistance, NavMesh.AllAreas))
+            StartJump();
+
         if (_hasTarget)
             MoveTowardsTarget();
         else
             _movable.SetMoveDirection(Vector3.zero);
 
-        _inputHandler.Update();
-
-        bool isOnLink = IsOnNavMeshLink(_movable.Position);
-
-        if (isOnLink != _wasOnLink)
-        {
-            _movable.ToggleGravity(!isOnLink);
-            _wasOnLink = isOnLink;
-        }
+        ValidatePositionOnNavMesh();
     }
 
     public bool SetTargetPoint(Vector3 position)
@@ -115,6 +123,31 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
         }
     }
 
+    private void ValidatePositionOnNavMesh()
+    {
+        if (NavMesh.SamplePosition(_movable.Position, out NavMeshHit hit, DeltaDistance, NavMesh.AllAreas))
+        {
+            if (Vector3.Distance(_movable.Position, hit.position) > 0.01f)
+                _movable.SetPosition(hit.position);
+        }
+        else
+        {
+            _movable.SetMoveDirection(Vector3.zero);
+        }
+    }
+
+    private void StartJump()
+    {
+        _movable.StartJump(_movable.Position, _globalEnd);
+        _isJumping = true;
+    }
+
+    private void StopJump()
+    {
+        _movable.StopJump();
+        _isJumping = false;
+    }
+
     private void CheckFinalTargetReached()
     {
         float distanceToTarget = Vector3.Distance(
@@ -157,6 +190,8 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
 
             _globalStart = link.transform.TransformPoint(link.startPoint);
             _globalEnd = link.transform.TransformPoint(link.endPoint);
+
+            _currentLinkHalfWidth = link.width / 2;
 
             float distanceToLink = DistanceToLineSegment(currentPosition, _globalStart, _globalEnd);
 
