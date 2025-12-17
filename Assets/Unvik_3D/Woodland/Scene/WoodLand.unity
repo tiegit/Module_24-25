@@ -1834,6 +1834,13 @@ MonoBehaviour:
   _agentEnemyCharacterHealth: {fileID: 48644732}
   _agentEnemyHealthBarView: {fileID: 0}
   _idleBehaviourSwitchTime: 4
+  _navMeshLinks:
+  - {fileID: 980688768}
+  - {fileID: 493191592}
+  - {fileID: 1700825790}
+  - {fileID: 703081664}
+  - {fileID: 1297777867}
+  - {fileID: 70228558}
   _mineManager: {fileID: 139971886}
 --- !u!4 &373757461
 Transform:
@@ -6059,6 +6066,13 @@ MonoBehaviour:
   _rotationSpeed: 500
   _groundChecker: {fileID: 430584979}
   _gravityForce: 9.8
+  _jumpSpeed: 0
+  _jumpCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!4 &1625420716
 Transform:
   m_ObjectHideFlags: 0
@@ -6968,7 +6982,41 @@ MonoBehaviour:
   _injuredMoveSpeed: 5
   _rotationSpeed: 900
   _groundChecker: {fileID: 1905199000}
-  _gravityForce: 9.8
+  _gravityForce: 4
+  _jumpSpeed: 12
+  _jumpCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 7.5087357
+      outSlope: 7.5087357
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.033391926
+    - serializedVersion: 3
+      time: 0.49999982
+      value: 2.0148287
+      inSlope: -0.0693264
+      outSlope: -0.0693264
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.09314559
+      outWeight: 0.09866714
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -5.9442973
+      outSlope: -5.9442973
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.06249996
+      outWeight: 0
+    m_PreInfinity: 0
+    m_PostInfinity: 1
+    m_RotationOrder: 4
 --- !u!114 &1799700073
 MonoBehaviour:
   m_ObjectHideFlags: 0

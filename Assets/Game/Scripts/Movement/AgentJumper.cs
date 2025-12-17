@@ -10,6 +10,7 @@ public class AgentJumper
     private AnimationCurve _yOffsetCurve;
 
     private Coroutine _jumpProcess;
+
     public AgentJumper(MonoBehaviour coroutineRunner,
                        NavMeshAgent agent,
                        float speed,

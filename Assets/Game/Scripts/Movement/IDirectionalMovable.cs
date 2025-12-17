@@ -6,4 +6,6 @@ public interface IDirectionalMovable : ITransformPosition
     Vector3 CurrentHorizontalVelocity { get; }
 
     void SetMoveDirection(Vector3 inputDirection);
+
+    void ToggleGravity(bool value);
 }

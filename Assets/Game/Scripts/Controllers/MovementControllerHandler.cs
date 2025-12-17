@@ -45,10 +45,17 @@
         }
         else
         {
-            _idleTimer += deltaTime;
+            if (!_playerMoveController.HasTarget)
+            {
+                _idleTimer += deltaTime;
 
-            if (_idleTimer >= _idleBehaviourSwitchTime)
-                SetController(_playerAutoPatrolController);
+                if (_idleTimer >= _idleBehaviourSwitchTime)
+                    SetController(_playerAutoPatrolController);
+            }
+            else
+            {
+                _idleTimer = 0f;
+            }
         }
     }
 }

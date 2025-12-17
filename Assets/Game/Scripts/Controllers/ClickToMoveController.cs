@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -5,8 +7,9 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
 {
     private const float DeltaDistance = 0.5f;
 
-    private IDirectionalMovable _movable;
+    private Character _movable;
     private NavMeshQueryFilter _queryFilter;
+    private List<NavMeshLink> _cachedLinks;
     private PlayerMovementInputHandler _inputHandler;
 
     private Vector3 _targetPosition;
@@ -14,13 +17,20 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
     private bool _hasTarget;
     private int _currentCornerIndex;
 
+    private bool _wasOnLink;
+    private Vector3 _globalStart;
+    private Vector3 _globalEnd;
+
     public ClickToMoveController(PlayerInput playerInput,
-                                IDirectionalMovable movable,
-                                NavMeshQueryFilter queryFilter)
+                                Character movable,
+                                NavMeshQueryFilter queryFilter,
+                                IEnumerable<NavMeshLink> navMeshLinks)
     {
         _movable = movable;
         _queryFilter = queryFilter;
         _inputHandler = new PlayerMovementInputHandler(playerInput, this);
+
+        _cachedLinks = new List<NavMeshLink>(navMeshLinks);
     }
 
     public Vector3 TargetPosition => _targetPosition;
@@ -34,6 +44,14 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
             _movable.SetMoveDirection(Vector3.zero);
 
         _inputHandler.Update();
+
+        bool isOnLink = IsOnNavMeshLink(_movable.Position);
+
+        if (isOnLink != _wasOnLink)
+        {
+            _movable.ToggleGravity(!isOnLink);
+            _wasOnLink = isOnLink;
+        }
     }
 
     public bool SetTargetPoint(Vector3 position)
@@ -64,6 +82,7 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
         if (_currentCornerIndex < _pathToTarget.corners.Length)
         {
             Vector3 currentCorner = _pathToTarget.corners[_currentCornerIndex];
+
             float distanceToCorner = Vector3.Distance(
                 new Vector3(_movable.Position.x, 0f, _movable.Position.z),
                 new Vector3(currentCorner.x, 0f, currentCorner.z)
@@ -103,7 +122,7 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
             new Vector3(_targetPosition.x, 0f, _targetPosition.z)
         );
 
-        if (distanceToTarget < DeltaDistance)
+        if (distanceToTarget <= DeltaDistance)
         {
             ResetTarget();
         }
@@ -128,5 +147,40 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
         _hasTarget = false;
         _currentCornerIndex = 0;
         _movable.SetMoveDirection(Vector3.zero);
+    }
+
+    private bool IsOnNavMeshLink(Vector3 currentPosition)
+    {
+        foreach (NavMeshLink link in _cachedLinks)
+        {
+            if (!link.gameObject.activeInHierarchy) continue;
+
+            _globalStart = link.transform.TransformPoint(link.startPoint);
+            _globalEnd = link.transform.TransformPoint(link.endPoint);
+
+            float distanceToLink = DistanceToLineSegment(currentPosition, _globalStart, _globalEnd);
+
+            if (distanceToLink < 1.0f)
+                return true;
+        }
+
+        return false;
+    }
+
+    private float DistanceToLineSegment(Vector3 point, Vector3 lineStart, Vector3 lineEnd)
+    {
+        Vector3 lineDirection = lineEnd - lineStart;
+        float lineLength = lineDirection.magnitude;
+
+        if (lineLength == 0)
+            return Vector3.Distance(point, lineStart);
+
+        Vector3 normalizedLineDirection = lineDirection / lineLength;
+        Vector3 pointToLineStart = point - lineStart;
+        float projectionLength = Vector3.Dot(pointToLineStart, normalizedLineDirection);
+        projectionLength = Mathf.Clamp(projectionLength, 0, lineLength);
+        Vector3 closestPoint = lineStart + normalizedLineDirection * projectionLength;
+
+        return Vector3.Distance(point, closestPoint);
     }
 }

@@ -50,7 +50,14 @@ public abstract class DirectionalMover
 
     public void SetMoveSpeed(float speed) => MoveSpeed = speed;
 
-    public void ToggleGravity(bool value) => _isGravityActive = value;
+    public void ToggleGravity(bool value)
+    {
+        if (_isGravityActive == value)
+            return;
+
+        _isGravityActive = value;
+        Debug.Log($"{_isGravityActive}");
+    }
 
     public void Stop() => _isStopped = true;
 

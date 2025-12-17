@@ -15,7 +15,10 @@ public class RigidbodyDirectionalMover : DirectionalMover
         SetMoveSpeed(moveSpeed);
     }
 
-    protected override void ApplyVelocity(Vector3 velocity, float deltaTime) =>
-         //_rigidbody.velocity = velocity;
-         _rigidbody.velocity = Vector3.Lerp(_rigidbody.velocity, velocity, deltaTime * SmoothFactor);
+    protected override void ApplyVelocity(Vector3 velocity, float deltaTime)
+    {
+        if (_rigidbody.isKinematic == false)       
+            //_rigidbody.velocity = velocity;
+            _rigidbody.velocity = Vector3.Lerp(_rigidbody.velocity, velocity, deltaTime * SmoothFactor);        
+    }
 }

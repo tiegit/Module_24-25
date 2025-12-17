@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -20,6 +22,7 @@ public class Bootstrap : MonoBehaviour
     [SerializeField] private Health _agentEnemyCharacterHealth;
     [SerializeField] private HealthBarView _agentEnemyHealthBarView;
     [SerializeField] private float _idleBehaviourSwitchTime = 4f;
+    [SerializeField] private List<NavMeshLink> _navMeshLinks;
 
     [SerializeField, Space(15)] private MineManager _mineManager;
 
@@ -40,7 +43,7 @@ public class Bootstrap : MonoBehaviour
         queryFilter.agentTypeID = 0;
         queryFilter.areaMask = NavMesh.AllAreas;
 
-        ClickToMoveController playerMoveController = new(playerInput, _character, queryFilter);
+        ClickToMoveController playerMoveController = new ClickToMoveController(playerInput, _character, queryFilter, _navMeshLinks);
 
         Pointer pointer = Instantiate(_pointerPrefab);
         pointer.Initialize(playerMoveController);
@@ -48,7 +51,7 @@ public class Bootstrap : MonoBehaviour
         var patrolPointPrefabInstance = Instantiate(_patrolPointPrefab);
 
         DirectionalMovableAutoPatrolController playerAutoPatrolController = 
-            new DirectionalMovableAutoPatrolController(_character, queryFilter, 2f, 0.5f, 0.2f, patrolPointPrefabInstance);
+            new DirectionalMovableAutoPatrolController(_character, queryFilter, 15f, 0.5f, 0.2f, patrolPointPrefabInstance);
 
         _characterController = new CompositeController(playerMoveController,
                                                        /*new PlayerDirectionalMovableController(playerInput, _character),*/
