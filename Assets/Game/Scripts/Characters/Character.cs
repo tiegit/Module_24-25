@@ -1,8 +1,10 @@
-using System;
 using UnityEngine;
 
 public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, ICharacter
 {
+    [SerializeField] private float _maxHealth = 100f;
+    [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 60f;
+
     [SerializeField] private float _maxMoveSpeed;
     [SerializeField] private float _injuredMoveSpeed;
     [SerializeField] private float _rotationSpeed;
@@ -10,12 +12,11 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
     [SerializeField] private ObstacleChecker _groundChecker;
     [SerializeField] private float _gravityForce;
 
-    [SerializeField] private float _jumpSpeed;
-    [SerializeField] private AnimationCurve _jumpCurve;
-
     private DirectionalMover _mover;
     private DirectionalRotator _rotator;
-    private CharacterJumper _jumper;
+    private HealthCounter _healthCounter;
+
+    private DamagableManager _damagableManager;
 
     private bool _isDead;
     private Rigidbody _rigidbody;
@@ -26,11 +27,13 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
     public Vector3 CurrentHorizontalVelocity => _mover.CurrentHorizontalVelocity;
     public Quaternion CurrentRotation => _rotator.CurrentRotation;
     public Vector3 Position => transform.position;
-    public bool InJumpProcess => _jumper.InProcess;
-    public float JumpDuration => _jumper.Duration;
+    public float CurrentHealthPercent => _healthCounter.CurrentHealthPercent;
 
-    private void Awake()
+    public void Initialize(DamagableManager manager, HealthMediator healthMediator)
     {
+        _damagableManager = manager;
+        _damagableManager.RegisterDamagable(this);
+    
         if (TryGetComponent(out CharacterController characterController))
         {
             _mover = new CharacterControllerDirectionalMover(characterController, _maxMoveSpeed, _groundChecker, _gravityForce);
@@ -42,11 +45,11 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
             _rotator = new RigidbodyDirectionalRotator(rigidbody, _rotationSpeed);
 
             _rigidbody = rigidbody;
-
-            _jumper = new CharacterJumper(this, rigidbody, _maxMoveSpeed, _jumpCurve);
         }
         else
             Debug.Log($"Not found mover comkdponent");
+
+        _healthCounter = new HealthCounter(healthMediator, _maxHealth, _injuredLayerThreshold);
     }
 
     private void Update()
@@ -79,33 +82,10 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     public void SetRotationDirection(Vector3 inputDirection) => _rotator.SetInputDirection(inputDirection);
 
-    public void StartJump(Vector3 startPosition, Vector3 endPosition)
+    public void TakeDamage(float value)
     {
-        if (_isDead || (_jumper != null && _jumper.InProcess))
-            return;
+        StopMove();
 
-        ToggleGravity(false);
-        _rigidbody.isKinematic = true;
-
-        _jumper?.Jump(startPosition, endPosition);
-
-        Debug.Log($"Конетматик On {_rigidbody.isKinematic}");
-    }
-
-    public void StopJump()
-    {
-        ToggleGravity(true);
-        _rigidbody.isKinematic = false;
-        Debug.Log($"Конетматик Off {_rigidbody.isKinematic}");
-    }
-
-    private void ToggleGravity(bool value) => _mover.ToggleGravity(value);
-
-    public void SetPosition(Vector3 position)
-    {
-        if (_rigidbody != null)
-            _rigidbody.MovePosition(position);
-        else
-            transform.position = position;
+        _healthCounter.TakeDamage(value);
     }
 }

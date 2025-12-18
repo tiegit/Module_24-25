@@ -5,7 +5,6 @@ public class Bootstrap : MonoBehaviour
 {
     [SerializeField] private Character _character;
     [SerializeField] private CharacterView _characterView;
-    [SerializeField] private Health _characterHealth;
     [SerializeField] private HealthBarView _healthBarView;
 
     [SerializeField, Space(15)] Pointer _pointerPrefab;
@@ -13,11 +12,11 @@ public class Bootstrap : MonoBehaviour
 
     [SerializeField, Space(15)] private Character _enemyCharacter;
     [SerializeField] private CharacterView _enemyCharacterView;
-    [SerializeField] private Health _enemyCharacterHealth;
+    [SerializeField] private HealthCounter _enemyCharacterHealth;
 
     [SerializeField, Space(15)] private AgentCharacter _agentEnemyCharacter;
     [SerializeField] private AgentCharacterView _agentEnemyCharacterView;
-    [SerializeField] private Health _agentEnemyCharacterHealth;
+    [SerializeField] private HealthCounter _agentEnemyCharacterHealth;
     [SerializeField] private HealthBarView _agentEnemyHealthBarView;
     [SerializeField] private float _idleBehaviourSwitchTime = 4f;
 
@@ -33,6 +32,12 @@ public class Bootstrap : MonoBehaviour
     private void Awake()
     {
         PlayerInput playerInput = new PlayerInput();
+        DamagableManager damagableManager = new DamagableManager();
+
+        HealthMediator characterHealthMediator = new HealthMediator(_character, _characterView);
+        _character.Initialize(damagableManager, characterHealthMediator);
+        
+        _characterView.Initialize(_character);
 
         _path = new NavMeshPath();
 
@@ -58,7 +63,6 @@ public class Bootstrap : MonoBehaviour
 
         _movementHandler = new MovementControllerHandler(playerInput, playerMoveController, playerAutoPatrolController, _idleBehaviourSwitchTime);
 
-        _characterView.Initialize(_character);
 
         _enemyCharacterController = new CompositeController(new DirectionalMovableAgroController(_enemyCharacter, _character.transform, 10f, 2f, queryFilter, 1f),
                                                             new AlongMovableVelocityRotatableController(_enemyCharacter, _enemyCharacter));
@@ -71,15 +75,14 @@ public class Bootstrap : MonoBehaviour
 
         _agentEnemyCharacterView.Initialize(_agentEnemyCharacter);
 
-        DamagableManager damagableManager = new DamagableManager();
 
-        _characterHealth.Initialize(_character, damagableManager, _characterView);
-        _healthBarView.Initialize(_characterHealth);
+        //_characterHealth.Initialize(_character, damagableManager, _characterView);
+        //_healthBarView.Initialize(_character);
 
-        _agentEnemyCharacterHealth.Initialize(_agentEnemyCharacter, damagableManager, _agentEnemyCharacterView);
-        _agentEnemyHealthBarView?.Initialize(_agentEnemyCharacterHealth);
+        //_agentEnemyCharacterHealth.Initialize(_agentEnemyCharacter, damagableManager, _agentEnemyCharacterView);
+        //_agentEnemyHealthBarView?.Initialize(_agentEnemyCharacterHealth);
 
-        _enemyCharacterHealth.Initialize(_enemyCharacter, damagableManager, _enemyCharacterView);
+        //_enemyCharacterHealth.Initialize(_enemyCharacter, damagableManager, _enemyCharacterView);
 
         _mineManager.Initialize(damagableManager);
     }
@@ -93,9 +96,6 @@ public class Bootstrap : MonoBehaviour
         _agentEnemyCharacterController.Update(Time.deltaTime);
 
         _movementHandler.Update(Time.deltaTime);
-
-        if (Input.GetKeyDown(KeyCode.F))
-            _characterHealth.TakeDamage(10);
     }
 
     private void OnDrawGizmosSelected()

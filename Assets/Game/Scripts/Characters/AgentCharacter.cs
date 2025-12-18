@@ -4,6 +4,9 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class AgentCharacter : MonoBehaviour, ICharacter
 {
+    [SerializeField] private float _maxHealth = 70f;
+    [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 30f;
+
     [SerializeField] private float _maxMoveSpeed;
     [SerializeField] private float _injuredMoveSpeed;
     [SerializeField] private float _rotationSpeed;
@@ -16,6 +19,7 @@ public class AgentCharacter : MonoBehaviour, ICharacter
 
     private AgentMover _mover;
     private TransformDirectionalRotator _rotator;
+    private HealthCounter _health;
     private AgentJumper _jumper;
 
     private bool _isDead;
@@ -23,10 +27,13 @@ public class AgentCharacter : MonoBehaviour, ICharacter
     public float MaxSpeed => _maxMoveSpeed;
     public float InjuredMoveSpeed => _injuredMoveSpeed;
 
-    public Vector3 CurrentVelocity => _mover.CurrentVelocity;
+    public Vector3 CurrentHorizontalVelocity => new Vector3(_mover.CurrentVelocity.x, 0, _mover.CurrentVelocity.z);
     public Quaternion CurrentRotation => _rotator.CurrentRotation;
     public bool InJumpProcess => _jumper.InProcess;
     public float JumpDuration => _jumper.Duration;
+
+    public Vector3 Position => transform.position;
+    public float CurrentHealthPercent => _health.CurrentHealthPercent;
 
     private void Awake()
     {
@@ -68,7 +75,7 @@ public class AgentCharacter : MonoBehaviour, ICharacter
 
     public bool IsOnMeshLink(out OffMeshLinkData offMeshLinkData)
     {
-        if(_agent.isOnOffMeshLink)
+        if (_agent.isOnOffMeshLink)
         {
             offMeshLinkData = _agent.currentOffMeshLinkData;
 
@@ -86,5 +93,10 @@ public class AgentCharacter : MonoBehaviour, ICharacter
             return;
 
         _jumper.Jump(offMeshLinkData);
+    }
+
+    public void TakeDamage(float value)
+    {
+        throw new System.NotImplementedException();
     }
 }

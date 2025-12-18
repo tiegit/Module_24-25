@@ -43,7 +43,7 @@ public class Mine : MonoBehaviour
 
     private void CheckForDamageableObjects()
     {
-        List<IDamagable> damagables = _damagableManager.GetAllDamagables();
+        List<ICharacter> damagables = _damagableManager.GetAllDamagables();
 
         foreach (var damagable in damagables)
         {
@@ -89,7 +89,7 @@ public class Mine : MonoBehaviour
         if (_explosionEffect != null)
             Instantiate(_explosionEffect, transform.position, Quaternion.identity);
 
-        List<IDamagable> damagables = _damagableManager.GetAllDamagables();
+        List<ICharacter> damagables = _damagableManager.GetAllDamagables();
 
         foreach (var damagable in damagables)
         {

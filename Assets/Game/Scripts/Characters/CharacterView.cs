@@ -3,17 +3,16 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class CharacterView : MonoBehaviour, IDamageAnimator
 {
-
     private readonly int WalkingVelocity = Animator.StringToHash("Velocity");
     private readonly int IsExploded = Animator.StringToHash("IsExploded");
     private readonly int IsDying = Animator.StringToHash("IsDying");
 
     private readonly string InjuredLayer = "Injured Layer";
 
-    private Character _character;
+    private ICharacter _character;
     private Animator _animator;
 
-    public void Initialize(Character character)
+    public void Initialize(ICharacter character)
     {
         _character = character;
 

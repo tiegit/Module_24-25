@@ -45,7 +45,7 @@ public class AgentCharacterAgroController : Controller
             return;
         }
 
-        _character.SetRotationDirection(_character.CurrentVelocity);
+        _character.SetRotationDirection(_character.CurrentHorizontalVelocity);
 
         if (_character.TryGetPath(_target.position, _pathToTarget))
         {

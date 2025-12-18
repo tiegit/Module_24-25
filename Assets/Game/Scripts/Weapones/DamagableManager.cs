@@ -3,15 +3,15 @@ using System.Linq;
 
 public class DamagableManager
 {
-    private List<IDamagable> _allDamagables = new List<IDamagable>();
+    private List<ICharacter> _allDamagables = new List<ICharacter>();
     
-    public List<IDamagable> GetAllDamagables() => _allDamagables.ToList();
+    public List<ICharacter> GetAllDamagables() => _allDamagables.ToList();
 
-    public void RegisterDamagable(IDamagable damagable)
+    public void RegisterDamagable(ICharacter damagable)
     {
         if (!_allDamagables.Contains(damagable))
             _allDamagables.Add(damagable);
     }
 
-    public void UnregisterDamagable(IDamagable damagable) => _allDamagables.Remove(damagable);
+    public void UnregisterDamagable(ICharacter damagable) => _allDamagables.Remove(damagable);
 }

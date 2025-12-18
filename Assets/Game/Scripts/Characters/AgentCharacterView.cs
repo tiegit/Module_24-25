@@ -43,8 +43,8 @@ public class AgentCharacterView : MonoBehaviour, IDamageAnimator
 
     private void Update()
     {
-        if (_character.CurrentVelocity.magnitude > 0.05f)
-            StartRunning(_character.CurrentVelocity.magnitude / _character.MaxSpeed);
+        if (_character.CurrentHorizontalVelocity.magnitude > 0.05f)
+            StartRunning(_character.CurrentHorizontalVelocity.magnitude / _character.MaxSpeed);
         else
             StopRunning();
 

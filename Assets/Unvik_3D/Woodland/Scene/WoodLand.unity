@@ -549,7 +549,6 @@ GameObject:
   - component: {fileID: 48644729}
   - component: {fileID: 48644731}
   - component: {fileID: 48644730}
-  - component: {fileID: 48644732}
   m_Layer: 0
   m_Name: AgentEnemyCharacter
   m_TagString: Untagged
@@ -585,6 +584,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 671ce00a9444b554cabc48f4b4d3eeab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _maxHealth: 70
+  _injuredLayerThreshold: 30
   _maxMoveSpeed: 6
   _injuredMoveSpeed: 3
   _rotationSpeed: 900
@@ -644,20 +645,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 2
---- !u!114 &48644732
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 48644727}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adcd2e5bac55c84408b06e2919b0f01c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _maxHealth: 40
-  _injuredLayerThreshold: 30
 --- !u!1 &67117583
 GameObject:
   m_ObjectHideFlags: 0
@@ -1820,7 +1807,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _character: {fileID: 1799700072}
   _characterView: {fileID: 346691367}
-  _characterHealth: {fileID: 1799700073}
   _healthBarView: {fileID: 1603191811}
   _pointerPrefab: {fileID: 8704954472106930348, guid: b100330906e702847b37637ec31f6127,
     type: 3}
@@ -1828,10 +1814,8 @@ MonoBehaviour:
     type: 3}
   _enemyCharacter: {fileID: 1625420715}
   _enemyCharacterView: {fileID: 1761119654}
-  _enemyCharacterHealth: {fileID: 1625420718}
   _agentEnemyCharacter: {fileID: 48644730}
   _agentEnemyCharacterView: {fileID: 273221101}
-  _agentEnemyCharacterHealth: {fileID: 48644732}
   _agentEnemyHealthBarView: {fileID: 0}
   _idleBehaviourSwitchTime: 4
   _mineManager: {fileID: 139971886}
@@ -5880,6 +5864,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72bd6f128df7127438a0b883a92f84a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _chracter: {fileID: 1799700072}
   _healthBarFilling: {fileID: 150188151}
 --- !u!114 &1603191812
 MonoBehaviour:
@@ -6034,7 +6019,6 @@ GameObject:
   - component: {fileID: 1625420716}
   - component: {fileID: 1625420717}
   - component: {fileID: 1625420715}
-  - component: {fileID: 1625420718}
   m_Layer: 0
   m_Name: EnemyCharacter
   m_TagString: Untagged
@@ -6054,18 +6038,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0476b1acfe1f984490433fce4c232f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _maxHealth: 100
+  _injuredLayerThreshold: 60
   _maxMoveSpeed: 6
   _injuredMoveSpeed: 3
   _rotationSpeed: 500
   _groundChecker: {fileID: 430584979}
   _gravityForce: 9.8
-  _jumpSpeed: 0
-  _jumpCurve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!4 &1625420716
 Transform:
   m_ObjectHideFlags: 0
@@ -6108,20 +6087,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 1.4, z: 0}
---- !u!114 &1625420718
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1625420714}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adcd2e5bac55c84408b06e2919b0f01c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _maxHealth: 70
-  _injuredLayerThreshold: 30
 --- !u!114 &1630607210 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1477614937204453133, guid: b84a205c1119ffb499c0a2389c39c129,
@@ -6932,7 +6897,6 @@ GameObject:
   - component: {fileID: 1799700075}
   - component: {fileID: 1799700074}
   - component: {fileID: 1799700072}
-  - component: {fileID: 1799700073}
   m_Layer: 0
   m_Name: Character
   m_TagString: Untagged
@@ -6971,59 +6935,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0476b1acfe1f984490433fce4c232f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _maxHealth: 100
+  _injuredLayerThreshold: 60
   _maxMoveSpeed: 8
   _injuredMoveSpeed: 5
   _rotationSpeed: 900
   _groundChecker: {fileID: 1905199000}
   _gravityForce: 4
-  _jumpSpeed: 12
-  _jumpCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 7.5087357
-      outSlope: 7.5087357
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.033391926
-    - serializedVersion: 3
-      time: 0.49999982
-      value: 2.0148287
-      inSlope: -0.0693264
-      outSlope: -0.0693264
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.09314559
-      outWeight: 0.09866714
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: -5.9442973
-      outSlope: -5.9442973
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.06249996
-      outWeight: 0
-    m_PreInfinity: 0
-    m_PostInfinity: 1
-    m_RotationOrder: 4
---- !u!114 &1799700073
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1799700069}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adcd2e5bac55c84408b06e2919b0f01c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _maxHealth: 100
-  _injuredLayerThreshold: 30
 --- !u!136 &1799700074
 CapsuleCollider:
   m_ObjectHideFlags: 0
