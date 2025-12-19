@@ -1,8 +1,11 @@
 ﻿using UnityEngine;
 
 public interface IDamagable
-{
-    Vector3 Position { get; }
+{    
     float CurrentHealthPercent { get; }
+    bool IsDead { get; }
+    bool IsInjured { get; }
+
     void TakeDamage(float value);
+    void SetDeathState(bool isDead);
 }

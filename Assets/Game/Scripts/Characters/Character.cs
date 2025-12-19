@@ -1,33 +1,38 @@
 using UnityEngine;
 
-public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, ICharacter
+public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IMovable
 {
     [SerializeField] private float _maxHealth = 100f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 60f;
 
-    [SerializeField] private float _maxMoveSpeed;
+    [SerializeField, Space(15)] private float _maxMoveSpeed;
     [SerializeField] private float _injuredMoveSpeed;
     [SerializeField] private float _rotationSpeed;
 
-    [SerializeField] private ObstacleChecker _groundChecker;
+    [SerializeField, Space(15)] private ObstacleChecker _groundChecker;
     [SerializeField] private float _gravityForce;
 
     private DirectionalMover _mover;
     private DirectionalRotator _rotator;
-    private HealthCounter _healthCounter;
+    private Health _health;
 
     private DamagableManager _damagableManager;
 
-    private bool _isDead;
     private Rigidbody _rigidbody;
+    private bool _isInjured;
+    private bool _isDead;
 
     public float MaxSpeed => _maxMoveSpeed;
     public float InjuredMoveSpeed => _injuredMoveSpeed;
 
     public Vector3 CurrentHorizontalVelocity => _mover.CurrentHorizontalVelocity;
     public Quaternion CurrentRotation => _rotator.CurrentRotation;
+
     public Vector3 Position => transform.position;
-    public float CurrentHealthPercent => _healthCounter.CurrentHealthPercent;
+    public float CurrentHealthPercent => _health.CurrentHealthPercent;
+
+    public bool IsDead => _isDead;
+    public bool IsInjured => _isInjured;
 
     public void Initialize(DamagableManager manager, HealthMediator healthMediator)
     {
@@ -47,18 +52,28 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
             _rigidbody = rigidbody;
         }
         else
-            Debug.Log($"Not found mover comkdponent");
+            Debug.Log($"Not found mover component");
 
-        _healthCounter = new HealthCounter(healthMediator, _maxHealth, _injuredLayerThreshold);
+        _health = new Health(healthMediator, _maxHealth);
     }
 
     private void Update()
     {
-        if (_isDead && _rigidbody)
-            return;
-
         _mover?.Update(Time.deltaTime);
         _rotator?.Update(Time.deltaTime);
+
+        if(_isDead == false && _health.CurrentHealth <= 0)
+            SetDeathState(true);
+
+        if (_isDead == false && _isInjured == false && CurrentHealthPercent <= _injuredLayerThreshold / 100)
+        {
+            SetMoveSpeed(_injuredMoveSpeed);
+
+            _isInjured = true;
+        }
+
+        if (_isDead && _rigidbody)
+            return;
     }
 
     private void FixedUpdate()
@@ -72,11 +87,22 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     public void SetMoveSpeed(float speed) => _mover.SetMoveSpeed(speed);
 
-    public void SetDeathState(bool isDead) => _isDead = isDead;
+    public void SetDeathState(bool isDead)
+    {
+        StopMove();
+
+        _isDead = isDead;
+    }
 
     public void StopMove() => _mover.Stop();
 
-    public void ResumeMove() => _mover.Resume();
+    public void ResumeMove()
+    {
+        if (_isDead)
+            return;
+
+        _mover.Resume();
+    }
 
     public void SetMoveDirection(Vector3 inputDirection) => _mover.SetInputDirection(inputDirection);
 
@@ -86,6 +112,6 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
     {
         StopMove();
 
-        _healthCounter.TakeDamage(value);
+        _health.TakeDamage(value);
     }
 }

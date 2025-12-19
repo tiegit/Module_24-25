@@ -54,11 +54,11 @@ public class AgentCharacterAgroController : Controller
             if (IsTargetReached(distanceToTarget))
                 _idleTimer = _timeForIdle;
 
-            if (InAgroRange(distanceToTarget)
-                && IdleTimerIsUp())
+            if (InAgroRange(distanceToTarget) && IdleTimerIsUp())
             {
                 _character.ResumeMove();
                 _character.SetDestination(_target.position);
+
                 return;
             }
         }

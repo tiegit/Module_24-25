@@ -2,26 +2,27 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class AgentCharacter : MonoBehaviour, ICharacter
+public class AgentCharacter : MonoBehaviour, IMovable, IJumper
 {
     [SerializeField] private float _maxHealth = 70f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 30f;
 
-    [SerializeField] private float _maxMoveSpeed;
+    [SerializeField, Space(15)] private float _maxMoveSpeed;
     [SerializeField] private float _injuredMoveSpeed;
     [SerializeField] private float _rotationSpeed;
 
-    [SerializeField] private float _jumpSpeed;
+    [SerializeField, Space(15)] private float _jumpSpeed;
     [SerializeField] private AnimationCurve _jumpCurve;
-    //[SerializeField] private Transform _target;
 
     private NavMeshAgent _agent;
 
     private AgentMover _mover;
     private TransformDirectionalRotator _rotator;
-    private HealthCounter _health;
     private AgentJumper _jumper;
+    private Health _health;
 
+    private DamagableManager _damagableManager;
+    private bool _isInjured;
     private bool _isDead;
 
     public float MaxSpeed => _maxMoveSpeed;
@@ -29,23 +30,45 @@ public class AgentCharacter : MonoBehaviour, ICharacter
 
     public Vector3 CurrentHorizontalVelocity => new Vector3(_mover.CurrentVelocity.x, 0, _mover.CurrentVelocity.z);
     public Quaternion CurrentRotation => _rotator.CurrentRotation;
-    public bool InJumpProcess => _jumper.InProcess;
-    public float JumpDuration => _jumper.Duration;
 
     public Vector3 Position => transform.position;
     public float CurrentHealthPercent => _health.CurrentHealthPercent;
 
-    private void Awake()
+    public bool InJumpProcess => _jumper.InProcess;
+    public float JumpDuration => _jumper.Duration;
+
+    public bool IsDead => _isDead;
+    public bool IsInjured => _isInjured;
+
+    public void Initialize(DamagableManager manager, HealthMediator healthMediator)
     {
+        _damagableManager = manager;
+        _damagableManager.RegisterDamagable(this);
+
         _agent = GetComponent<NavMeshAgent>();
         _agent.updateRotation = false;
 
         _mover = new AgentMover(_agent, _maxMoveSpeed);
         _rotator = new TransformDirectionalRotator(transform, _rotationSpeed);
         _jumper = new AgentJumper(this, _agent, _jumpSpeed, _jumpCurve);
+
+        _health = new Health(healthMediator, _maxHealth);
     }
 
-    private void Update() => _rotator.Update(Time.deltaTime);
+    private void Update()
+    {
+        _rotator.Update(Time.deltaTime);
+
+        if (_isDead == false && _health.CurrentHealth <= 0)
+            SetDeathState(true);
+
+        if (_isDead == false && _isInjured == false && CurrentHealthPercent <= _injuredLayerThreshold / 100)
+        {
+            SetMoveSpeed(_injuredMoveSpeed);
+
+            _isInjured = true;
+        }
+    }
 
     public void SetMoveSpeed(float speed) => _mover.SetMoveSpeed(speed);
 
@@ -70,6 +93,13 @@ public class AgentCharacter : MonoBehaviour, ICharacter
 
     public void SetRotationDirection(Vector3 inputDirection) => _rotator.SetInputDirection(inputDirection);
 
+    public void TakeDamage(float value)
+    {
+        StopMove();
+
+        _health.TakeDamage(value);
+    }
+
     public bool TryGetPath(Vector3 targetPosition, NavMeshPath pathToTarget)
         => NavMeshUtils.TryGetPath(_agent, targetPosition, pathToTarget);
 
@@ -82,7 +112,7 @@ public class AgentCharacter : MonoBehaviour, ICharacter
             return true;
         }
 
-        offMeshLinkData = default(OffMeshLinkData);
+        offMeshLinkData = default;
 
         return false;
     }
@@ -93,10 +123,5 @@ public class AgentCharacter : MonoBehaviour, ICharacter
             return;
 
         _jumper.Jump(offMeshLinkData);
-    }
-
-    public void TakeDamage(float value)
-    {
-        throw new System.NotImplementedException();
     }
 }

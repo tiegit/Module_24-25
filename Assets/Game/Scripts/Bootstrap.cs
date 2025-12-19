@@ -4,19 +4,19 @@ using UnityEngine.AI;
 public class Bootstrap : MonoBehaviour
 {
     [SerializeField] private Character _character;
-    [SerializeField] private CharacterView _characterView;
+    [SerializeField] private Animator _characterAnimator;
     [SerializeField] private HealthBarView _healthBarView;
 
     [SerializeField, Space(15)] Pointer _pointerPrefab;
     [SerializeField] private GameObject _patrolPointPrefab;
 
     [SerializeField, Space(15)] private Character _enemyCharacter;
-    [SerializeField] private CharacterView _enemyCharacterView;
-    [SerializeField] private HealthCounter _enemyCharacterHealth;
+    [SerializeField] private Animator _enemyCharacterAnimator;
+    [SerializeField] private Health _enemyCharacterHealth;
 
     [SerializeField, Space(15)] private AgentCharacter _agentEnemyCharacter;
-    [SerializeField] private AgentCharacterView _agentEnemyCharacterView;
-    [SerializeField] private HealthCounter _agentEnemyCharacterHealth;
+    [SerializeField] private Animator _agentEnemyCharacterAnimator;
+    [SerializeField] private Health _agentEnemyCharacterHealth;
     [SerializeField] private HealthBarView _agentEnemyHealthBarView;
     [SerializeField] private float _idleBehaviourSwitchTime = 4f;
 
@@ -26,6 +26,11 @@ public class Bootstrap : MonoBehaviour
     private Controller _enemyCharacterController;
     private Controller _agentEnemyCharacterController;
 
+    private CharacterView _characterView;
+    private CharacterView _enemyCharacterView;
+    private CharacterView _agentEnemyCharacterView;
+    private AgentCharacterJumpView _agentEnemyCharacterJumpView;
+
     private NavMeshPath _path;
     private MovementControllerHandler _movementHandler;
 
@@ -34,12 +39,13 @@ public class Bootstrap : MonoBehaviour
         PlayerInput playerInput = new PlayerInput();
         DamagableManager damagableManager = new DamagableManager();
 
-        HealthMediator characterHealthMediator = new HealthMediator(_character, _characterView);
-        _character.Initialize(damagableManager, characterHealthMediator);
-        
-        _characterView.Initialize(_character);
+        #region Character
 
-        _path = new NavMeshPath();
+        HealthMediator characterHealthMediator = new HealthMediator(_characterView);
+
+        _character.Initialize(damagableManager, characterHealthMediator);
+
+        _characterView = new CharacterView(_characterAnimator, _character);
 
         NavMeshQueryFilter queryFilter = new NavMeshQueryFilter();
         queryFilter.agentTypeID = 0;
@@ -52,39 +58,55 @@ public class Bootstrap : MonoBehaviour
 
         var patrolPointPrefabInstance = Instantiate(_patrolPointPrefab);
 
-        DirectionalMovableAutoPatrolController playerAutoPatrolController = 
+        DirectionalMovableAutoPatrolController playerAutoPatrolController =
             new DirectionalMovableAutoPatrolController(_character, queryFilter, 15f, 0.5f, 0.2f, patrolPointPrefabInstance);
 
         _characterController = new CompositeController(playerMoveController,
-                                                       /*new PlayerDirectionalMovableController(playerInput, _character),*/
                                                        playerAutoPatrolController,
                                                        new AlongMovableVelocityRotatableController(_character, _character));
         _characterController.Enable();
 
+        _healthBarView?.Initialize(_character);
+
         _movementHandler = new MovementControllerHandler(playerInput, playerMoveController, playerAutoPatrolController, _idleBehaviourSwitchTime);
 
+        #endregion
+
+        #region EnemyCharacter
+
+        HealthMediator enemyCharacterHealthMediator = new HealthMediator(_enemyCharacterView);
+
+        _enemyCharacter.Initialize(damagableManager, enemyCharacterHealthMediator);
+
+        _enemyCharacterView = new CharacterView(_enemyCharacterAnimator, _enemyCharacter);
 
         _enemyCharacterController = new CompositeController(new DirectionalMovableAgroController(_enemyCharacter, _character.transform, 10f, 2f, queryFilter, 1f),
                                                             new AlongMovableVelocityRotatableController(_enemyCharacter, _enemyCharacter));
         _enemyCharacterController.Enable();
-        _enemyCharacterView.Initialize(_enemyCharacter);
+
+        #endregion
+
+        #region AgentEnemyCharacter
+
+        HealthMediator agentEnemyCharacterHealthMediator = new HealthMediator(_agentEnemyCharacterView);
+
+        _agentEnemyCharacter.Initialize(damagableManager, agentEnemyCharacterHealthMediator);
+
+        _agentEnemyCharacterView = new CharacterView(_agentEnemyCharacterAnimator, _agentEnemyCharacter);
+
+        _agentEnemyCharacterJumpView = new AgentCharacterJumpView(_agentEnemyCharacterAnimator, _agentEnemyCharacter);
 
         _agentEnemyCharacterController = new AgentCharacterAgroController(_agentEnemyCharacter, _character.transform, 100, 2, 1);
 
         _agentEnemyCharacterController.Enable();
 
-        _agentEnemyCharacterView.Initialize(_agentEnemyCharacter);
+        _agentEnemyHealthBarView?.Initialize(_agentEnemyCharacter);
 
-
-        //_characterHealth.Initialize(_character, damagableManager, _characterView);
-        //_healthBarView.Initialize(_character);
-
-        //_agentEnemyCharacterHealth.Initialize(_agentEnemyCharacter, damagableManager, _agentEnemyCharacterView);
-        //_agentEnemyHealthBarView?.Initialize(_agentEnemyCharacterHealth);
-
-        //_enemyCharacterHealth.Initialize(_enemyCharacter, damagableManager, _enemyCharacterView);
+        #endregion
 
         _mineManager.Initialize(damagableManager);
+
+        _path = new NavMeshPath();
     }
 
     //private void Start() => _enemyCharacter.gameObject.SetActive(false);
@@ -96,6 +118,11 @@ public class Bootstrap : MonoBehaviour
         _agentEnemyCharacterController.Update(Time.deltaTime);
 
         _movementHandler.Update(Time.deltaTime);
+
+        _characterView.Update(Time.deltaTime);
+        _enemyCharacterView.Update(Time.deltaTime);
+        _agentEnemyCharacterView.Update(Time.deltaTime);
+        _agentEnemyCharacterJumpView.Update(Time.deltaTime);
     }
 
     private void OnDrawGizmosSelected()

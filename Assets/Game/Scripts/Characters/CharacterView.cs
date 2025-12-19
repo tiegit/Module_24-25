@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
-public class CharacterView : MonoBehaviour, IDamageAnimator
+public class CharacterView : IDamageAnimator, IUpdatable
 {
     private readonly int WalkingVelocity = Animator.StringToHash("Velocity");
     private readonly int IsExploded = Animator.StringToHash("IsExploded");
@@ -9,27 +9,49 @@ public class CharacterView : MonoBehaviour, IDamageAnimator
 
     private readonly string InjuredLayer = "Injured Layer";
 
-    private ICharacter _character;
     private Animator _animator;
+    private IMovable _movable;
 
-    public void Initialize(ICharacter character)
+    private bool _isCharacterIsInjured;
+    private bool _isCharacterDead;
+
+    public CharacterView(Animator animator, IMovable character)
     {
-        _character = character;
-
-        _animator = GetComponent<Animator>();
+        _movable = character;
+        _animator = animator;
     }
 
-    private void Update()
+    public void Update(float deltaTime)
     {
-        if (_character.CurrentHorizontalVelocity.magnitude > 0.05f)
-            StartRunning(_character.CurrentHorizontalVelocity.magnitude / _character.MaxSpeed);
+        if (_movable.CurrentHorizontalVelocity.magnitude > 0.05f)
+            StartRunning(_movable.CurrentHorizontalVelocity.magnitude / _movable.MaxSpeed);
         else
             StopRunning();
+
+        if (_isCharacterIsInjured == false && _movable.IsInjured)
+        {
+            _isCharacterIsInjured = true;
+
+            SetInjuredLayer();
+        }
+
+        if (_isCharacterDead == false && _movable.IsDead)
+        {
+            _isCharacterDead = true;
+
+            DyingAnimation();
+        }
     }
 
     public void TakeDamage() => _animator.SetTrigger(IsExploded);
 
-    public void SetInjuredLayer()
+    public void ResumeMove() => _movable.ResumeMove();
+
+    private void StopRunning() => _animator.SetFloat(WalkingVelocity, 0);
+
+    private void StartRunning(float speedRatio) => _animator.SetFloat(WalkingVelocity, speedRatio);
+
+    private void SetInjuredLayer()
     {
         int layerIndex = _animator.GetLayerIndex(InjuredLayer);
 
@@ -37,11 +59,5 @@ public class CharacterView : MonoBehaviour, IDamageAnimator
             _animator.SetLayerWeight(layerIndex, 1);
     }
 
-    public void ResumeMove() => _character.ResumeMove();
-
-    public void DyingAnimation() => _animator.SetBool(IsDying, true);
-
-    private void StopRunning() => _animator.SetFloat(WalkingVelocity, 0);
-
-    private void StartRunning(float speedRatio) => _animator.SetFloat(WalkingVelocity, speedRatio);
+    private void DyingAnimation() => _animator.SetBool(IsDying, true);
 }
