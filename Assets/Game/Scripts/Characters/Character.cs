@@ -1,6 +1,7 @@
 using UnityEngine;
+using UnityEngine.AI;
 
-public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IDamagable
+public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IDamagable, IJumper
 {
     [SerializeField] private float _maxHealth = 100f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 60f;
@@ -32,6 +33,10 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     public bool IsDead => _isDead;
     public bool IsInjured => _isInjured;
+
+    public bool InJumpProcess => false;
+
+    public float JumpDuration => 0;
 
     public void Initialize(HealthMediator healthMediator)
     {
@@ -105,7 +110,16 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
         _mover.Resume();
     }
 
-    public void SetMoveDirection(Vector3 inputDirection) => _mover.SetInputDirection(inputDirection);
+    public void SetMoveDirection(Vector3 inputDirection)
+    {
+        Vector3 horizontalDirection = new Vector3(
+                inputDirection.x - Position.x,
+                0f,
+                inputDirection.z - Position.z
+            );
+
+        _mover.SetInputDirection(inputDirection.normalized);
+    }
 
     public void SetRotationDirection(Vector3 inputDirection) => _rotator.SetInputDirection(inputDirection);
 
@@ -114,5 +128,17 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
         StopMove();
 
         _health.TakeDamage(value);
+    }
+
+    public bool IsOnMeshLink(out OffMeshLinkData offMeshLinkData)
+    {
+        offMeshLinkData = default;
+
+        return false;
+    }
+
+    public void Jump(OffMeshLinkData offMeshLinkData)
+    {
+
     }
 }

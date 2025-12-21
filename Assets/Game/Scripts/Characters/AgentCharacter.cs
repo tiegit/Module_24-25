@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class AgentCharacter : MonoBehaviour, IMovable, IJumper, IDamagable
+public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IJumper, IDamagable
 {
     [SerializeField] private float _maxHealth = 70f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 30f;
@@ -86,6 +86,16 @@ public class AgentCharacter : MonoBehaviour, IMovable, IJumper, IDamagable
     }
 
     public void SetDestination(Vector3 position) => _mover.SetDestination(position);
+
+    public void SetMoveDirection(Vector3 inputDirection)
+    {
+        if (inputDirection == Vector3.zero)
+            StopMove();
+        else
+            ResumeMove();
+
+            SetDestination(inputDirection);
+    }
 
     public void SetRotationDirection(Vector3 inputDirection) => _rotator.SetInputDirection(inputDirection);
 

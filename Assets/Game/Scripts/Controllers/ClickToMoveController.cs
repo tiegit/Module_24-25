@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.TextCore.Text;
 
 public class ClickToMoveController : Controller, IPointerTargetOwner
 {
@@ -7,20 +8,27 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
 
     private readonly PlayerClickInputHandler _clickHandler;
     private IDirectionalMovable _movable;
+    private readonly IDirectionalRotatable _rotatable;
+    private readonly IJumper _jumper;
     private NavMeshQueryFilter _queryFilter;
 
-    private Vector3 _targetPosition;
     private NavMeshPath _pathToTarget = new NavMeshPath();
+
+    private Vector3 _targetPosition;
     private bool _hasTarget;
     private int _currentCornerIndex;
 
     public ClickToMoveController(PlayerClickInputHandler clickHandler,
                                 IDirectionalMovable movable,
+                                IDirectionalRotatable rotatable,
+                                IJumper jumper,
                                 NavMeshQueryFilter queryFilter)
     {
-        _movable = movable;
-        _queryFilter = queryFilter;
         _clickHandler = clickHandler;
+        _movable = movable;
+        _rotatable = rotatable;
+        _jumper = jumper;
+        _queryFilter = queryFilter;
     }
 
     public Vector3 TargetPosition => _targetPosition;
@@ -35,6 +43,20 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
             MoveTowardsTarget();
         else
             _movable.SetMoveDirection(Vector3.zero);
+
+
+        if (_jumper.IsOnMeshLink(out OffMeshLinkData offMeshLinkData))
+        {
+            if (_jumper.InJumpProcess == false)
+            {
+                Vector3 rotation = new Vector3((offMeshLinkData.endPos - offMeshLinkData.startPos).x, _rotatable.CurrentRotation.y, (offMeshLinkData.endPos - offMeshLinkData.startPos).z);
+
+                _rotatable.SetRotationDirection(rotation);
+                _jumper.Jump(offMeshLinkData);
+            }
+
+            return;
+        }
     }
 
     private bool SetTargetPoint(Vector3 position)
@@ -83,13 +105,7 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
 
             Vector3 nextCorner = _pathToTarget.corners[_currentCornerIndex];
 
-            Vector3 horizontalDirection = new Vector3(
-                nextCorner.x - _movable.Position.x,
-                0f,
-                nextCorner.z - _movable.Position.z
-            ).normalized;
-
-            _movable.SetMoveDirection(horizontalDirection);
+            _movable.SetMoveDirection(nextCorner);
         }
         else
         {

@@ -9,6 +9,7 @@ public class HealthBarView : MonoBehaviour
     private Camera _camera;
 
     private float _lastHealthPercent;
+    private bool _isHPBarActive = true;
 
     public void Initialize(IDamagable damagable = null)
     {
@@ -34,11 +35,18 @@ public class HealthBarView : MonoBehaviour
 
             OnHealthChanged();
         }
+
+        if (_isHPBarActive && _damagable.IsDead)
+        {
+            _isHPBarActive = false;
+
+            gameObject.SetActive(false);
+        }
     }
 
     private void LateUpdate()
     {
-        if (_damagable == null)
+        if (_isHPBarActive == false || _damagable == null)
             return;
 
         transform.rotation = _camera.transform.rotation;

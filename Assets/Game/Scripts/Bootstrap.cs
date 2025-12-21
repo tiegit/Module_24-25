@@ -3,31 +3,39 @@ using UnityEngine.AI;
 
 public class Bootstrap : MonoBehaviour
 {
-    [SerializeField] private Character _character;
-    [SerializeField] private Animator _characterAnimator;
-    [SerializeField] private HealthBarView _healthBarView;
-
-    [SerializeField, Space(15)] Pointer _pointerPrefab;
+    [SerializeField] Pointer _pointerPrefab;
     [SerializeField] private GameObject _patrolPointPrefab;
 
-    [SerializeField, Space(15)] private Character _enemyCharacter;
-    [SerializeField] private Animator _enemyCharacterAnimator;
-    [SerializeField] private Health _enemyCharacterHealth;
+    [SerializeField, Space(20)] private Character _character;
+    [SerializeField] private Animator _characterAnimator;
+    [SerializeField, Space(5)] private HealthBarView _characterHealthBarView;
 
-    [SerializeField, Space(15)] private AgentCharacter _agentEnemyCharacter;
+    [SerializeField, Space(20)] private AgentCharacter _agentCharacter;
+    [SerializeField] private Animator _agentCharacterAnimator;
+    [SerializeField, Space(5)] private HealthBarView _agentCharacterhealthBarView;
+
+    [SerializeField, Space(20)] private Character _enemyCharacter;
+    [SerializeField] private Animator _enemyCharacterAnimator;
+
+    [SerializeField, Space(20)] private AgentCharacter _agentEnemyCharacter;
     [SerializeField] private Animator _agentEnemyCharacterAnimator;
-    [SerializeField] private Health _agentEnemyCharacterHealth;
-    [SerializeField] private HealthBarView _agentEnemyHealthBarView;
-    [SerializeField] private float _idleBehaviourSwitchTime = 4f;
+    [SerializeField, Space(5)] private HealthBarView _agentEnemyHealthBarView;
+    [SerializeField, Space(5)] private float _idleBehaviourSwitchTime = 4f;
 
     private Controller _characterController;
+    private Controller _agentCharacterController;
     private Controller _enemyCharacterController;
     private Controller _agentEnemyCharacterController;
 
     private CharacterView _characterView;
+
+    private CharacterView _agentCharacterView;
+    private AgentCharacterJumpView _agentCharacterJumpView;
     private CharacterView _enemyCharacterView;
+
     private CharacterView _agentEnemyCharacterView;
     private AgentCharacterJumpView _agentEnemyCharacterJumpView;
+
 
     private NavMeshPath _path;
     private MovementControllerHandler _movementHandler;
@@ -38,6 +46,12 @@ public class Bootstrap : MonoBehaviour
         PlayerInput playerInput = new PlayerInput();
         _clickHandler = new PlayerClickInputHandler(playerInput);
 
+        var patrolPointPrefabInstance = Instantiate(_patrolPointPrefab);
+
+        NavMeshQueryFilter queryFilter = new NavMeshQueryFilter();
+        queryFilter.agentTypeID = 0;
+        queryFilter.areaMask = NavMesh.AllAreas;
+
         #region Character
 
         _characterView = new CharacterView(_characterAnimator, _character, _character, this);
@@ -45,16 +59,10 @@ public class Bootstrap : MonoBehaviour
 
         _character.Initialize(characterHealthMediator);
 
-        NavMeshQueryFilter queryFilter = new NavMeshQueryFilter();
-        queryFilter.agentTypeID = 0;
-        queryFilter.areaMask = NavMesh.AllAreas;
-
-        ClickToMoveController playerMoveController = new ClickToMoveController(_clickHandler, _character, queryFilter);
+        ClickToMoveController playerMoveController = new ClickToMoveController(_clickHandler, _character, _character, _character, queryFilter);
 
         Pointer pointer = Instantiate(_pointerPrefab);
         pointer.Initialize(playerMoveController);
-
-        var patrolPointPrefabInstance = Instantiate(_patrolPointPrefab);
 
         DirectionalMovableAutoPatrolController playerAutoPatrolController =
             new DirectionalMovableAutoPatrolController(_character, queryFilter, 15f, 0.5f, 0.2f, patrolPointPrefabInstance);
@@ -64,9 +72,31 @@ public class Bootstrap : MonoBehaviour
                                                        new AlongMovableVelocityRotatableController(_character, _character));
         _characterController.Enable();
 
-        _healthBarView?.Initialize(_character);
+        _characterHealthBarView?.Initialize(_character);
 
         _movementHandler = new MovementControllerHandler(playerInput, playerMoveController, playerAutoPatrolController, _idleBehaviourSwitchTime);
+
+        #endregion
+
+        #region AgentCharacter
+
+        _agentCharacterView = new CharacterView(_agentCharacterAnimator, _agentCharacter, _agentCharacter, this);
+        HealthMediator agentCharacterHealthMediator = new HealthMediator(_agentCharacterView);
+
+        _agentCharacter.Initialize(agentCharacterHealthMediator);
+
+        ClickToMoveController agentPlayerMoveController = new ClickToMoveController(_clickHandler, _agentCharacter, _agentCharacter, _agentCharacter, queryFilter);
+
+        Pointer agentPointer = Instantiate(_pointerPrefab);
+        agentPointer.Initialize(agentPlayerMoveController);
+
+        _agentCharacterJumpView = new AgentCharacterJumpView(_agentCharacterAnimator, _agentCharacter);
+
+        _agentCharacterController = new CompositeController(agentPlayerMoveController,
+                                                       new AlongMovableVelocityRotatableController(_agentCharacter, _agentCharacter));
+        _agentCharacterController.Enable();
+
+        _agentCharacterhealthBarView?.Initialize(_agentCharacter);
 
         #endregion
 
@@ -92,7 +122,8 @@ public class Bootstrap : MonoBehaviour
 
         _agentEnemyCharacterJumpView = new AgentCharacterJumpView(_agentEnemyCharacterAnimator, _agentEnemyCharacter);
 
-        _agentEnemyCharacterController = new AgentCharacterAgroController(_agentEnemyCharacter, _character.transform, 100, 2, 1);
+        //_agentEnemyCharacterController = new AgentCharacterAgroController(_agentEnemyCharacter, _character.transform, 100, 2, 1);
+        _agentEnemyCharacterController = new AgentCharacterAgroController(_agentEnemyCharacter, _agentCharacter.transform, 100, 2, 1);
 
         _agentEnemyCharacterController.Enable();
 
@@ -100,25 +131,36 @@ public class Bootstrap : MonoBehaviour
 
         #endregion
 
-        //_mineManager.Initialize(damagableManager);
-
         _path = new NavMeshPath();
     }
 
-    //private void Start() => _enemyCharacter.gameObject.SetActive(false);
+    private void Start()
+    {
+        //_character.gameObject.SetActive(false);
+        _enemyCharacter.gameObject.SetActive(false);
+    }
 
     private void Update()
     {
         _clickHandler.UpdateInput();
 
-        _characterController.Update(Time.deltaTime);
+        //_characterController.Update(Time.deltaTime);
+
+        _agentCharacterController.Update(Time.deltaTime);
+
         _enemyCharacterController.Update(Time.deltaTime);
+
         _agentEnemyCharacterController.Update(Time.deltaTime);
 
         _movementHandler.Update(Time.deltaTime);
 
-        _characterView.Update(Time.deltaTime);
+        //_characterView.Update(Time.deltaTime);
+
+        _agentCharacterView.Update(Time.deltaTime);
+        _agentCharacterJumpView.Update(Time.deltaTime);
+
         _enemyCharacterView.Update(Time.deltaTime);
+
         _agentEnemyCharacterView.Update(Time.deltaTime);
         _agentEnemyCharacterJumpView.Update(Time.deltaTime);
     }
