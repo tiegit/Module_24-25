@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-public interface IDamagable
+﻿public interface IDamagable
 {    
     float CurrentHealthPercent { get; }
     bool IsDead { get; }

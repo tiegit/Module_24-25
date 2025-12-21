@@ -21,7 +21,6 @@ public abstract class DirectionalMover
         ToggleGravity(true);
     }
 
-    //public Vector3 CurrentVelocity => _currentDirection.normalized * MoveSpeed;
     public Vector3 CurrentHorizontalVelocity { get; protected set; }
 
     public void Update(float deltaTime)
@@ -29,7 +28,7 @@ public abstract class DirectionalMover
         if (_groundChecker.IsTouches() || _isGravityActive == false)
             _gravityVelocity.y = 0f;
         else if (_groundChecker.IsTouches() == false)
-            _gravityVelocity.y -= _gravityForce;
+            _gravityVelocity.y = -_gravityForce;
 
         if (_isStopped)
         {

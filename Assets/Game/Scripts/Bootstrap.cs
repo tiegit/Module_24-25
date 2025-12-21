@@ -20,8 +20,6 @@ public class Bootstrap : MonoBehaviour
     [SerializeField] private HealthBarView _agentEnemyHealthBarView;
     [SerializeField] private float _idleBehaviourSwitchTime = 4f;
 
-    [SerializeField, Space(15)] private MineManager _mineManager;
-
     private Controller _characterController;
     private Controller _enemyCharacterController;
     private Controller _agentEnemyCharacterController;
@@ -33,25 +31,25 @@ public class Bootstrap : MonoBehaviour
 
     private NavMeshPath _path;
     private MovementControllerHandler _movementHandler;
+    private PlayerClickInputHandler _clickHandler;
 
     private void Awake()
     {
         PlayerInput playerInput = new PlayerInput();
-        DamagableManager damagableManager = new DamagableManager();
+        _clickHandler = new PlayerClickInputHandler(playerInput);
 
         #region Character
 
+        _characterView = new CharacterView(_characterAnimator, _character, _character, this);
         HealthMediator characterHealthMediator = new HealthMediator(_characterView);
 
-        _character.Initialize(damagableManager, characterHealthMediator);
-
-        _characterView = new CharacterView(_characterAnimator, _character);
+        _character.Initialize(characterHealthMediator);
 
         NavMeshQueryFilter queryFilter = new NavMeshQueryFilter();
         queryFilter.agentTypeID = 0;
         queryFilter.areaMask = NavMesh.AllAreas;
 
-        ClickToMoveController playerMoveController = new ClickToMoveController(playerInput, _character, queryFilter);
+        ClickToMoveController playerMoveController = new ClickToMoveController(_clickHandler, _character, queryFilter);
 
         Pointer pointer = Instantiate(_pointerPrefab);
         pointer.Initialize(playerMoveController);
@@ -74,11 +72,10 @@ public class Bootstrap : MonoBehaviour
 
         #region EnemyCharacter
 
+        _enemyCharacterView = new CharacterView(_enemyCharacterAnimator, _enemyCharacter, _enemyCharacter, this);
         HealthMediator enemyCharacterHealthMediator = new HealthMediator(_enemyCharacterView);
 
-        _enemyCharacter.Initialize(damagableManager, enemyCharacterHealthMediator);
-
-        _enemyCharacterView = new CharacterView(_enemyCharacterAnimator, _enemyCharacter);
+        _enemyCharacter.Initialize(enemyCharacterHealthMediator);
 
         _enemyCharacterController = new CompositeController(new DirectionalMovableAgroController(_enemyCharacter, _character.transform, 10f, 2f, queryFilter, 1f),
                                                             new AlongMovableVelocityRotatableController(_enemyCharacter, _enemyCharacter));
@@ -88,11 +85,10 @@ public class Bootstrap : MonoBehaviour
 
         #region AgentEnemyCharacter
 
+        _agentEnemyCharacterView = new CharacterView(_agentEnemyCharacterAnimator, _agentEnemyCharacter, _agentEnemyCharacter, this);
         HealthMediator agentEnemyCharacterHealthMediator = new HealthMediator(_agentEnemyCharacterView);
 
-        _agentEnemyCharacter.Initialize(damagableManager, agentEnemyCharacterHealthMediator);
-
-        _agentEnemyCharacterView = new CharacterView(_agentEnemyCharacterAnimator, _agentEnemyCharacter);
+        _agentEnemyCharacter.Initialize(agentEnemyCharacterHealthMediator);
 
         _agentEnemyCharacterJumpView = new AgentCharacterJumpView(_agentEnemyCharacterAnimator, _agentEnemyCharacter);
 
@@ -104,7 +100,7 @@ public class Bootstrap : MonoBehaviour
 
         #endregion
 
-        _mineManager.Initialize(damagableManager);
+        //_mineManager.Initialize(damagableManager);
 
         _path = new NavMeshPath();
     }
@@ -113,6 +109,8 @@ public class Bootstrap : MonoBehaviour
 
     private void Update()
     {
+        _clickHandler.UpdateInput();
+
         _characterController.Update(Time.deltaTime);
         _enemyCharacterController.Update(Time.deltaTime);
         _agentEnemyCharacterController.Update(Time.deltaTime);

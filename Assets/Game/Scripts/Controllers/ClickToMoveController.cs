@@ -4,9 +4,8 @@ using UnityEngine.AI;
 public class ClickToMoveController : Controller, IPointerTargetOwner
 {
     private const float DeltaDistance = 0.5f;
-    private const float OutDeltaDistance = 0.1f;
 
-    private PlayerMovementInputHandler _inputHandler;
+    private readonly PlayerClickInputHandler _clickHandler;
     private IDirectionalMovable _movable;
     private NavMeshQueryFilter _queryFilter;
 
@@ -15,13 +14,13 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
     private bool _hasTarget;
     private int _currentCornerIndex;
 
-    public ClickToMoveController(PlayerInput playerInput,
+    public ClickToMoveController(PlayerClickInputHandler clickHandler,
                                 IDirectionalMovable movable,
                                 NavMeshQueryFilter queryFilter)
     {
-        _inputHandler = new PlayerMovementInputHandler(playerInput, this);
         _movable = movable;
         _queryFilter = queryFilter;
+        _clickHandler = clickHandler;
     }
 
     public Vector3 TargetPosition => _targetPosition;
@@ -29,20 +28,16 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
 
     protected override void UpdateLogic(float deltaTime)
     {
-        _inputHandler.Update();
+        if (_clickHandler.HasHit)
+            SetTargetPoint(_clickHandler.HitPoint);
 
         if (_hasTarget)
-        {
             MoveTowardsTarget();
-            ValidatePositionOnNavMesh();
-        }
         else
-        {
             _movable.SetMoveDirection(Vector3.zero);
-        }
     }
 
-    public bool SetTargetPoint(Vector3 position)
+    private bool SetTargetPoint(Vector3 position)
     {
         if (NavMesh.CalculatePath(_movable.Position, position, _queryFilter, _pathToTarget))
         {
@@ -56,7 +51,6 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
         }
 
         ResetTarget();
-
         return false;
     }
 
@@ -71,8 +65,10 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
         if (_currentCornerIndex < _pathToTarget.corners.Length)
         {
             Vector3 currentCorner = _pathToTarget.corners[_currentCornerIndex];
-
-            float distanceToCorner = Vector3.Distance(_movable.Position, currentCorner);
+            float distanceToCorner = Vector3.Distance(
+                new Vector3(_movable.Position.x, 0f, _movable.Position.z),
+                new Vector3(currentCorner.x, 0f, currentCorner.z)
+            );
 
             if (distanceToCorner < DeltaDistance)
             {
@@ -101,19 +97,6 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
         }
     }
 
-    private void ValidatePositionOnNavMesh()
-    {
-        if (NavMesh.SamplePosition(_movable.Position, out NavMeshHit hit, DeltaDistance, NavMesh.AllAreas))
-        {
-            if (Vector3.Distance(_movable.Position, hit.position) > OutDeltaDistance)
-                _movable.SetMoveDirection(hit.position);
-        }
-        else
-        {
-            _movable.SetMoveDirection(Vector3.zero);
-        }
-    }
-
     private void CheckFinalTargetReached()
     {
         float distanceToTarget = Vector3.Distance(
@@ -121,7 +104,7 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
             new Vector3(_targetPosition.x, 0f, _targetPosition.z)
         );
 
-        if (distanceToTarget <= DeltaDistance)
+        if (distanceToTarget < DeltaDistance)
         {
             ResetTarget();
         }

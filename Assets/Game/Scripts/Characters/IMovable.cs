@@ -1,11 +1,10 @@
 ﻿using UnityEngine;
 
-public interface IMovable : IDamagable
+public interface IMovable : ITransformPosition
 {
     float MaxSpeed { get; }
     float InjuredMoveSpeed { get; }
     Vector3 CurrentHorizontalVelocity { get; }
-    Vector3 Position { get; }
 
     void SetMoveSpeed(float speed);
     void StopMove();

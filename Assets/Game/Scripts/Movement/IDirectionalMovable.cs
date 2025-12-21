@@ -1,9 +1,6 @@
 using UnityEngine;
 
-public interface IDirectionalMovable : ITransformPosition
+public interface IDirectionalMovable : IMovable
 {
-    float MaxSpeed { get; }
-    Vector3 CurrentHorizontalVelocity { get; }
-
     void SetMoveDirection(Vector3 inputDirection);
 }

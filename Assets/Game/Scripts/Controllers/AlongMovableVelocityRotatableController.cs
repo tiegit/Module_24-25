@@ -1,9 +1,9 @@
 public class AlongMovableVelocityRotatableController : Controller
 {
-    private IDirectionalMovable _movable;
+    private IMovable _movable;
     private IDirectionalRotatable _rotatable;
 
-    public AlongMovableVelocityRotatableController(IDirectionalMovable movable, IDirectionalRotatable rotatable)
+    public AlongMovableVelocityRotatableController(IMovable movable, IDirectionalRotatable rotatable)
     {
         _movable = movable;
         _rotatable = rotatable;

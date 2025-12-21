@@ -12,10 +12,11 @@ public class HealthBarView : MonoBehaviour
 
     public void Initialize(IDamagable damagable = null)
     {
-        if (_damagable == null)
+        if (damagable == null)
             return;
 
         _camera = Camera.main;
+        _damagable = damagable;
 
         _lastHealthPercent = _damagable.CurrentHealthPercent;
 

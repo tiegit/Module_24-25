@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class AgentCharacter : MonoBehaviour, IMovable, IJumper
+public class AgentCharacter : MonoBehaviour, IMovable, IJumper, IDamagable
 {
     [SerializeField] private float _maxHealth = 70f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 30f;
@@ -21,7 +21,6 @@ public class AgentCharacter : MonoBehaviour, IMovable, IJumper
     private AgentJumper _jumper;
     private Health _health;
 
-    private DamagableManager _damagableManager;
     private bool _isInjured;
     private bool _isDead;
 
@@ -40,11 +39,8 @@ public class AgentCharacter : MonoBehaviour, IMovable, IJumper
     public bool IsDead => _isDead;
     public bool IsInjured => _isInjured;
 
-    public void Initialize(DamagableManager manager, HealthMediator healthMediator)
+    public void Initialize(HealthMediator healthMediator)
     {
-        _damagableManager = manager;
-        _damagableManager.RegisterDamagable(this);
-
         _agent = GetComponent<NavMeshAgent>();
         _agent.updateRotation = false;
 

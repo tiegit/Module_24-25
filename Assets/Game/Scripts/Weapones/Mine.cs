@@ -1,122 +1,94 @@
-using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
+[RequireComponent (typeof(SphereCollider))]
 public class Mine : MonoBehaviour
 {
-    [SerializeField] private float _damage = 30f;
+    [SerializeField] private float _activationRadius = 1f;
     [SerializeField] private float _explosionRadius = 3f;
-    [SerializeField] private float _checkInterval = 0.5f;
+    [SerializeField] private float _damage = 30f;
     [SerializeField] private float _explosionDelay = 2f;
-    [SerializeField] private GameObject _explosionEffect;
     [SerializeField] private float _blinkSpeed = 5f;
     [SerializeField] private Renderer _mineRenderer;
+    [SerializeField] private GameObject _explosionEffect;
 
-    private float _timer;
-    private float _explosionTimer;
-    private bool _isActivated;
-    private DamagableManager _damagableManager;
+    private SphereCollider _collider;
+
     private Color _originalColor;
 
-    public void Initialize(DamagableManager damagableManager) => _damagableManager = damagableManager;
+    private Coroutine _mineActivationCourutine;
+    private Coroutine _blinkCoroutine;
 
-    private void Start()
+    private void Awake()
     {
+        _collider = GetComponent<SphereCollider>();
+        _collider.radius = _activationRadius;
+
         if (_mineRenderer != null)        
             _originalColor = _mineRenderer.material.color;        
     }
 
-    private void Update()
+    private void OnTriggerEnter(Collider other)
     {
-        _timer += Time.deltaTime;
-
-        if (_timer >= _checkInterval && _damagableManager != null)
-        {
-            CheckForDamageableObjects();
-            _timer = 0f;
-        }
-
-        if (_isActivated)
-        {
-            HandleActivatedState();
-        }
+        if (_mineActivationCourutine == null && other.TryGetComponent(out IDamagable damagable))
+            _mineActivationCourutine = StartCoroutine(ActivateMine());
     }
 
-    private void CheckForDamageableObjects()
+    private IEnumerator ActivateMine()
     {
-        List<IMovable> damagables = _damagableManager.GetAllDamagables();
+        _blinkCoroutine = StartCoroutine(BlinkCoroutine());
 
-        foreach (var damagable in damagables)
+        yield return _blinkCoroutine;
+
+        _blinkCoroutine = null;
+
+        Explode();
+    }
+    
+    private IEnumerator BlinkCoroutine()
+    {
+        float elapsedTime = 0f;
+
+        while (elapsedTime < _explosionDelay)
         {
-            float distance = Vector3.Distance(transform.position, damagable.Position);
-
-            if (distance <= _explosionRadius)
+            if (_mineRenderer != null)
             {
-                if (!_isActivated)
-                {
-                    _isActivated = true;
-                    _explosionTimer = 0f;
-                }
-
-                return;
+                float blinkValue = Mathf.PingPong(elapsedTime * _blinkSpeed, 1f);
+                Color blinkColor = Color.Lerp(_originalColor, Color.white, blinkValue);
+                _mineRenderer.material.color = blinkColor;
             }
+
+            elapsedTime += Time.deltaTime;
+
+            yield return null;
         }
-    }
 
-    private void HandleActivatedState()
-    {
-        _explosionTimer += Time.deltaTime;
-
-        UpdateBlinkEffect();
-
-        if (_explosionTimer >= _explosionDelay)
-        {
-            Explode();
-        }
-    }
-
-    private void UpdateBlinkEffect()
-    {
         if (_mineRenderer != null)
-        {
-            float blinkValue = Mathf.PingPong(Time.time * _blinkSpeed, 1f);
-            Color blinkColor = Color.Lerp(_originalColor, Color.white, blinkValue);
-            _mineRenderer.material.color = blinkColor;
-        }
+            _mineRenderer.material.color = _originalColor;
     }
 
     private void Explode()
     {
-        if (_explosionEffect != null)
-            Instantiate(_explosionEffect, transform.position, Quaternion.identity);
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, _explosionRadius);
 
-        List<IMovable> damagables = _damagableManager.GetAllDamagables();
-
-        foreach (var damagable in damagables)
+        foreach (var hitCollider in hitColliders)
         {
-            float distance = Vector3.Distance(transform.position, damagable.Position);
-
-            if (distance <= _explosionRadius)
-            {
+            if (hitCollider.TryGetComponent(out IDamagable damagable))
                 damagable.TakeDamage(_damage);
-
-                if (damagable.CurrentHealthPercent <= 0)
-                    _damagableManager.UnregisterDamagable(damagable);
-            }
         }
+
+        if (_explosionEffect != null)
+            Instantiate(_explosionEffect, transform.position, _explosionEffect.transform.rotation, null);
 
         gameObject.SetActive(false);
     }
 
     private void OnDrawGizmos()
     {
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, _activationRadius);
+
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, _explosionRadius);
-
-        if (Application.isPlaying && _isActivated)
-        {
-            float progress = Mathf.Clamp01(_explosionTimer / _explosionDelay);
-            Gizmos.color = Color.Lerp(Color.yellow, Color.red, progress);
-            Gizmos.DrawSphere(transform.position, 0.3f * progress);
-        }
     }
 }

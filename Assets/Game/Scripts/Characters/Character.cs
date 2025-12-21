@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IMovable
+public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IDamagable
 {
     [SerializeField] private float _maxHealth = 100f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 60f;
@@ -16,8 +16,7 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
     private DirectionalRotator _rotator;
     private Health _health;
 
-    private DamagableManager _damagableManager;
-
+    private CharacterController _characterController;
     private Rigidbody _rigidbody;
     private bool _isInjured;
     private bool _isDead;
@@ -34,15 +33,14 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
     public bool IsDead => _isDead;
     public bool IsInjured => _isInjured;
 
-    public void Initialize(DamagableManager manager, HealthMediator healthMediator)
+    public void Initialize(HealthMediator healthMediator)
     {
-        _damagableManager = manager;
-        _damagableManager.RegisterDamagable(this);
-    
         if (TryGetComponent(out CharacterController characterController))
         {
             _mover = new CharacterControllerDirectionalMover(characterController, _maxMoveSpeed, _groundChecker, _gravityForce);
             _rotator = new TransformDirectionalRotator(transform, _rotationSpeed);
+
+            _characterController = characterController;
         }
         else if (TryGetComponent(out Rigidbody rigidbody))
         {
@@ -59,10 +57,7 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     private void Update()
     {
-        _mover?.Update(Time.deltaTime);
-        _rotator?.Update(Time.deltaTime);
-
-        if(_isDead == false && _health.CurrentHealth <= 0)
+        if (_isDead == false && _health.CurrentHealth <= 0)
             SetDeathState(true);
 
         if (_isDead == false && _isInjured == false && CurrentHealthPercent <= _injuredLayerThreshold / 100)
@@ -72,13 +67,16 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
             _isInjured = true;
         }
 
-        if (_isDead && _rigidbody)
+        if (_isDead || _characterController == null)
             return;
+
+        _mover?.Update(Time.deltaTime);
+        _rotator?.Update(Time.deltaTime);
     }
 
     private void FixedUpdate()
     {
-        if (_isDead && _rigidbody == null)
+        if (_isDead || _rigidbody == null)
             return;
 
         _mover?.Update(Time.deltaTime);
@@ -89,9 +87,12 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     public void SetDeathState(bool isDead)
     {
+        _isDead = isDead;
+
         StopMove();
 
-        _isDead = isDead;
+        if (_characterController)
+            _characterController.enabled = false;
     }
 
     public void StopMove() => _mover.Stop();
