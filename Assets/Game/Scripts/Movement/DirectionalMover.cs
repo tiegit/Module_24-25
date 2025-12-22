@@ -2,8 +2,6 @@
 
 public abstract class DirectionalMover
 {
-    protected float MoveSpeed;
-
     private ObstacleChecker _groundChecker;
     private float _gravityForce;
     private Vector3 _gravityVelocity = Vector3.zero;
@@ -21,6 +19,7 @@ public abstract class DirectionalMover
         ToggleGravity(true);
     }
 
+    public float MoveSpeed { get; protected set; }
     public Vector3 CurrentHorizontalVelocity { get; protected set; }
 
     public void Update(float deltaTime)

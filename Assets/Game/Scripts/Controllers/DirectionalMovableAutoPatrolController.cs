@@ -5,71 +5,62 @@ public class DirectionalMovableAutoPatrolController : Controller
 {
     private const float MinEdgeDistance = 0.5f;
     private const int MaxAttempts = 10;
-    private const int MinCornersCountInPathToMove = 2;
-    private const int StartCornerIndex = 0;
-    private const int TargetCornerIndex = 1;
-    private const float MoveDistanceTrashold = 0.2f;
-    private const float TimeToReachTarget = 3f;
+    private const float StuckCheckInterval = 2.0f;
+    private const float MinStuckDistanceProgress = 0.5f;
+    private const float DeltaDistance = 0.5f;
 
-    private IDirectionalMovable _movable;
     private NavMeshQueryFilter _queryFilter;
     private float _patrolRadius;
     private float _minDistanceToTarget;
     private float _timeForIdle;
-    private GameObject _patrolPointPrefabInstance;
+    private IDirectionalMovable _movable;
+    private readonly IDirectionalRotatable _rotatable;
+    private readonly IJumper _jumper;
+    private GameObject _patrolPointInstance;
 
     private Vector3 _currentPatrolPoint = Vector3.zero;
-    private NavMeshPath _pathToTarget = new NavMeshPath();
+    private NavMeshPath _patrolPath = new NavMeshPath();
+    private int _currentCornerIndex;
     private float _idleTimer;
-    private Vector3 _previousPosition;
     private float _stuckTimer;
+    private float _lastTargetDistance;
 
-    public DirectionalMovableAutoPatrolController(IDirectionalMovable movable,
-                                                  NavMeshQueryFilter queryFilter,
+    private bool _isResetting;
+
+    public DirectionalMovableAutoPatrolController(NavMeshQueryFilter queryFilter,
                                                   float patrolRadius,
                                                   float minDistanceToTarget,
                                                   float timeForIdle,
-                                                  GameObject patrolPointPrefabInstance = null)
+                                                  IDirectionalMovable movable,
+                                                  IDirectionalRotatable rotatable,
+                                                  IJumper jumper = null,
+                                                  GameObject patrolPointInstance = null)
     {
         _movable = movable;
+        _rotatable = rotatable;
+        _jumper = jumper;
         _queryFilter = queryFilter;
         _patrolRadius = patrolRadius;
         _minDistanceToTarget = minDistanceToTarget;
         _timeForIdle = timeForIdle;
-        _patrolPointPrefabInstance = patrolPointPrefabInstance;
-        _previousPosition = movable.Position;
+        _patrolPointInstance = patrolPointInstance;
+
+        _stuckTimer = StuckCheckInterval;
     }
 
     protected override void UpdateLogic(float deltaTime)
     {
-        _idleTimer -= Time.deltaTime;
+        _idleTimer -= deltaTime;
+        _stuckTimer -= deltaTime;
 
-        CheckIfStuck();
+        if (_stuckTimer <= 0)
+            CheckForStuckState();
 
-        if (NavMeshUtils.TryGetPath(_movable.Position, _currentPatrolPoint, _queryFilter, _pathToTarget))
-        {
-            float distanceToTarget = NavMeshUtils.GetPathLength(_pathToTarget);
+        if (_jumper == null || !_jumper.InJumpProcess)
+            HandlePatrolling();
 
-            if (IsTargetReached(distanceToTarget))
-            {
-                _idleTimer = _timeForIdle;
-                GenerateNewPatrolPoint();
-                return;
-            }
-
-            if (EnoughCornersInPath(_pathToTarget) && IdleTimerIsUp())
-            {
-                _movable.SetMoveDirection(_pathToTarget.corners[TargetCornerIndex] - _pathToTarget.corners[StartCornerIndex]);
-                UpdatePatrolPointVisualization();
-                return;
-            }
-
-            _movable.SetMoveDirection(Vector3.zero);
-        }
-        else
-        {
-            GenerateNewPatrolPoint();
-        }
+        if (_jumper != null && !_jumper.InJumpProcess)
+            HandleOffMeshLink();
     }
 
     public override void Enable()
@@ -78,45 +69,107 @@ public class DirectionalMovableAutoPatrolController : Controller
 
         GenerateNewPatrolPoint();
 
-        _patrolPointPrefabInstance.gameObject.SetActive(true);
+        _patrolPointInstance.gameObject.SetActive(true);
     }
 
     public override void Disable()
     {
         base.Disable();
 
-        _patrolPointPrefabInstance.gameObject.SetActive(false);
+        _patrolPointInstance.gameObject.SetActive(false);
+        _patrolPath.ClearCorners();
+        _currentCornerIndex = 0;
     }
 
-    private void CheckIfStuck()
+    private void CheckForStuckState()
     {
-        float distanceMoved = Vector3.Distance(_movable.Position, _previousPosition);
+        float currentTargetDistance = Vector3.Distance(_movable.Position, _currentPatrolPoint);
+        float distanceProgress = _lastTargetDistance - currentTargetDistance;
 
-        if (distanceMoved < MoveDistanceTrashold)
+        if (distanceProgress < MinStuckDistanceProgress && currentTargetDistance > _minDistanceToTarget)
+            GenerateNewPatrolPoint();
+
+        _lastTargetDistance = currentTargetDistance;
+        _stuckTimer = StuckCheckInterval;
+    }
+
+    private void HandlePatrolling()
+    {
+        if (!IdleTimerIsUp())
         {
-            _stuckTimer += Time.deltaTime;
+            _movable.StopMove();
+            return;
+        }
 
-            if (_stuckTimer > TimeToReachTarget)
+        if (_patrolPath.corners.Length == 0)
+        {
+            ResetPatrol();
+            return;
+        }
+
+        if (_currentCornerIndex < _patrolPath.corners.Length)
+        {
+            Vector3 currentCorner = _patrolPath.corners[_currentCornerIndex];
+
+            float distanceToCorner = Vector3.Distance(
+                new Vector3(_movable.Position.x, 0f, _movable.Position.z),
+                new Vector3(currentCorner.x, 0f, currentCorner.z)
+            );
+
+            if (distanceToCorner < DeltaDistance)
             {
-                GenerateNewPatrolPoint();
+                _currentCornerIndex++;
 
-                _stuckTimer = 0f;
+                if (_currentCornerIndex >= _patrolPath.corners.Length)
+                {
+                    _idleTimer = _timeForIdle;
+
+                    GenerateNewPatrolPoint();
+
+                    return;
+                }
             }
+
+            Vector3 nextCorner = _patrolPath.corners[_currentCornerIndex];
+
+            _movable.SetMoveDirection(nextCorner);
+
+            UpdatePatrolPointVisualization();
         }
         else
         {
-            _stuckTimer = 0f;
+            CheckTargetReached();
         }
-
-        _previousPosition = _movable.Position;
     }
+
+    private void HandleOffMeshLink()
+    {
+        if (_jumper.IsOnMeshLink(out OffMeshLinkData offMeshLinkData))
+        {
+            if (_jumper.InJumpProcess == false)
+            {
+                Vector3 rotation = new Vector3((offMeshLinkData.endPos - offMeshLinkData.startPos).x, _rotatable.CurrentRotation.y, (offMeshLinkData.endPos - offMeshLinkData.startPos).z);
+
+                _rotatable.SetRotationDirection(rotation);
+
+                _jumper.Jump(offMeshLinkData);
+            }
+
+            return;
+        }
+    }
+
     private void GenerateNewPatrolPoint()
     {
+        _movable.StopMove();
+
+        Vector3 startPosition = _movable.Position;
+
         for (int i = 0; i < MaxAttempts; i++)
         {
             Vector2 randomCircle = Random.insideUnitCircle * _patrolRadius;
             Vector3 randomOffset = new Vector3(randomCircle.x, 0, randomCircle.y);
-            Vector3 potentialPoint = _movable.Position + randomOffset;
+            Vector3 potentialPoint = startPosition + randomOffset;
 
             if (NavMesh.SamplePosition(potentialPoint, out NavMeshHit hit, _patrolRadius, _queryFilter.areaMask))
             {
@@ -124,26 +177,69 @@ public class DirectionalMovableAutoPatrolController : Controller
                 {
                     if (edgeHit.distance >= MinEdgeDistance)
                     {
-                        _currentPatrolPoint = hit.position;
-                        _stuckTimer = 0f;
-                        UpdatePatrolPointVisualization();
+                        if (NavMeshUtils.TryGetPath(startPosition, hit.position, _queryFilter, _patrolPath)
+                            && _patrolPath.status == NavMeshPathStatus.PathComplete)
+                        {
+                            _currentPatrolPoint = hit.position;
+                            _currentCornerIndex = 0;
+                            _stuckTimer = StuckCheckInterval;
 
-                        return;
+                            _lastTargetDistance = Vector3.Distance(startPosition, _currentPatrolPoint);
+
+                            UpdatePatrolPointVisualization();
+                            return;
+                        }
                     }
                 }
             }
         }
+
+        ResetPatrol();
     }
 
     private void UpdatePatrolPointVisualization()
     {
-        if (_patrolPointPrefabInstance != null)
-            _patrolPointPrefabInstance.transform.position = _currentPatrolPoint;
+        if (_patrolPointInstance != null)
+            _patrolPointInstance.transform.position = _currentPatrolPoint;
+    }
+
+    private void CheckTargetReached()
+    {
+        float distanceToTarget = Vector3.Distance(
+            new Vector3(_movable.Position.x, 0f, _movable.Position.z),
+            new Vector3(_currentPatrolPoint.x, 0f, _currentPatrolPoint.z)
+        );
+
+        if (IsTargetReached(distanceToTarget))
+        {
+            _idleTimer = _timeForIdle;
+            GenerateNewPatrolPoint();
+            _movable.StopMove();
+            return;
+        }
+    }
+
+    private void ResetPatrol()
+    {
+        if (_isResetting)
+            return;
+
+        _isResetting = true;
+
+        _currentPatrolPoint = _movable.Position;
+        _patrolPath.ClearCorners();
+        _currentCornerIndex = 0;
+        _lastTargetDistance = 0f;
+        _stuckTimer = StuckCheckInterval;
+
+        GenerateNewPatrolPoint();
+
+        _isResetting = false;
+
+        UpdatePatrolPointVisualization();
     }
 
     private bool IsTargetReached(float distanceToTarget) => distanceToTarget < _minDistanceToTarget;
-
-    private bool EnoughCornersInPath(NavMeshPath pathToTarget) => _pathToTarget.corners.Length >= MinCornersCountInPathToMove;
 
     private bool IdleTimerIsUp() => _idleTimer <= 0;
 }

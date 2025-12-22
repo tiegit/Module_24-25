@@ -85,8 +85,6 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
         _mover.Resume();
     }
 
-    public void SetDestination(Vector3 position) => _mover.SetDestination(position);
-
     public void SetMoveDirection(Vector3 inputDirection)
     {
         if (inputDirection == Vector3.zero)
@@ -94,7 +92,9 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
         else
             ResumeMove();
 
-            SetDestination(inputDirection);
+        Debug.Log($"{inputDirection}");
+
+        SetDestination(inputDirection);
     }
 
     public void SetRotationDirection(Vector3 inputDirection) => _rotator.SetInputDirection(inputDirection);
@@ -130,4 +130,6 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
 
         _jumper.Jump(offMeshLinkData);
     }
+
+    private void SetDestination(Vector3 position) => _mover.SetDestination(position);
 }

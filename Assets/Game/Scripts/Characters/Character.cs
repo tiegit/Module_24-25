@@ -1,7 +1,6 @@
 using UnityEngine;
-using UnityEngine.AI;
 
-public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IDamagable, IJumper
+public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IDamagable
 {
     [SerializeField] private float _maxHealth = 100f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 60f;
@@ -33,10 +32,6 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     public bool IsDead => _isDead;
     public bool IsInjured => _isInjured;
-
-    public bool InJumpProcess => false;
-
-    public float JumpDuration => 0;
 
     public void Initialize(HealthMediator healthMediator)
     {
@@ -128,17 +123,5 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
         StopMove();
 
         _health.TakeDamage(value);
-    }
-
-    public bool IsOnMeshLink(out OffMeshLinkData offMeshLinkData)
-    {
-        offMeshLinkData = default;
-
-        return false;
-    }
-
-    public void Jump(OffMeshLinkData offMeshLinkData)
-    {
-
     }
 }

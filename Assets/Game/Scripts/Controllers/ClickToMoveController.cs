@@ -1,16 +1,15 @@
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.TextCore.Text;
 
 public class ClickToMoveController : Controller, IPointerTargetOwner
 {
     private const float DeltaDistance = 0.5f;
 
     private readonly PlayerClickInputHandler _clickHandler;
+    private NavMeshQueryFilter _queryFilter;
     private IDirectionalMovable _movable;
     private readonly IDirectionalRotatable _rotatable;
     private readonly IJumper _jumper;
-    private NavMeshQueryFilter _queryFilter;
 
     private NavMeshPath _pathToTarget = new NavMeshPath();
 
@@ -19,16 +18,16 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
     private int _currentCornerIndex;
 
     public ClickToMoveController(PlayerClickInputHandler clickHandler,
+                                NavMeshQueryFilter queryFilter,
                                 IDirectionalMovable movable,
                                 IDirectionalRotatable rotatable,
-                                IJumper jumper,
-                                NavMeshQueryFilter queryFilter)
+                                IJumper jumper = null)
     {
         _clickHandler = clickHandler;
+        _queryFilter = queryFilter;
         _movable = movable;
         _rotatable = rotatable;
         _jumper = jumper;
-        _queryFilter = queryFilter;
     }
 
     public Vector3 TargetPosition => _targetPosition;
@@ -42,21 +41,11 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
         if (_hasTarget)
             MoveTowardsTarget();
         else
-            _movable.SetMoveDirection(Vector3.zero);
+            //_movable.SetMoveDirection(Vector3.zero);
+            _movable.StopMove();
 
-
-        if (_jumper.IsOnMeshLink(out OffMeshLinkData offMeshLinkData))
-        {
-            if (_jumper.InJumpProcess == false)
-            {
-                Vector3 rotation = new Vector3((offMeshLinkData.endPos - offMeshLinkData.startPos).x, _rotatable.CurrentRotation.y, (offMeshLinkData.endPos - offMeshLinkData.startPos).z);
-
-                _rotatable.SetRotationDirection(rotation);
-                _jumper.Jump(offMeshLinkData);
-            }
-
-            return;
-        }
+        if (_jumper != null)
+            HandleOffMeshLink();
     }
 
     private bool SetTargetPoint(Vector3 position)
@@ -105,11 +94,28 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
 
             Vector3 nextCorner = _pathToTarget.corners[_currentCornerIndex];
 
+            _movable.ResumeMove();
             _movable.SetMoveDirection(nextCorner);
         }
         else
         {
             CheckFinalTargetReached();
+        }
+    }
+
+    private void HandleOffMeshLink()
+    {
+        if (_jumper.IsOnMeshLink(out OffMeshLinkData offMeshLinkData))
+        {
+            if (_jumper.InJumpProcess == false)
+            {
+                Vector3 rotation = new Vector3((offMeshLinkData.endPos - offMeshLinkData.startPos).x, _rotatable.CurrentRotation.y, (offMeshLinkData.endPos - offMeshLinkData.startPos).z);
+
+                _rotatable.SetRotationDirection(rotation);
+                _jumper.Jump(offMeshLinkData);
+            }
+
+            return;
         }
     }
 
@@ -144,6 +150,6 @@ public class ClickToMoveController : Controller, IPointerTargetOwner
     {
         _hasTarget = false;
         _currentCornerIndex = 0;
-        _movable.SetMoveDirection(Vector3.zero);
+        _movable.StopMove();
     }
 }

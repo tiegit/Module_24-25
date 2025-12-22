@@ -2,6 +2,8 @@
 
 public abstract class DirectionalRotator
 {
+    private const float RotationTrashold = 0.05f;
+
     private float _rotationSpeed;
 
     private Vector3 _currentDirection;
@@ -13,7 +15,7 @@ public abstract class DirectionalRotator
 
     public void Update(float deltaTime)
     {
-        if (_currentDirection.magnitude < 0.05f)
+        if (_currentDirection.magnitude < RotationTrashold)
             return;
 
         Quaternion lookRotation = Quaternion.LookRotation(_currentDirection.normalized);

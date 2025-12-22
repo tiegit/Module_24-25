@@ -51,11 +51,12 @@ public class DirectionalMovableAgroController : Controller
                 && EnoughCornersInPath(_pathToTarget)
                 && IdleTimerIsUp())
             {
+                _movable.ResumeMove();
                 _movable.SetMoveDirection(_pathToTarget.corners[TargetCornerIndex] - _pathToTarget.corners[StartCornerIndex]);
                 return;
             }
 
-            _movable.SetMoveDirection(Vector3.zero);
+            _movable.StopMove();
         }
     }
 

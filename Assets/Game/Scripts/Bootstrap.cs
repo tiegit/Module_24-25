@@ -27,6 +27,9 @@ public class Bootstrap : MonoBehaviour
     private Controller _enemyCharacterController;
     private Controller _agentEnemyCharacterController;
 
+    private MovementControllerHandler _characterMovementHandler;
+    private MovementControllerHandler _agentCharacterMovementHandler;
+
     private CharacterView _characterView;
 
     private CharacterView _agentCharacterView;
@@ -36,9 +39,7 @@ public class Bootstrap : MonoBehaviour
     private CharacterView _agentEnemyCharacterView;
     private AgentCharacterJumpView _agentEnemyCharacterJumpView;
 
-
     private NavMeshPath _path;
-    private MovementControllerHandler _movementHandler;
     private PlayerClickInputHandler _clickHandler;
 
     private void Awake()
@@ -46,7 +47,7 @@ public class Bootstrap : MonoBehaviour
         PlayerInput playerInput = new PlayerInput();
         _clickHandler = new PlayerClickInputHandler(playerInput);
 
-        var patrolPointPrefabInstance = Instantiate(_patrolPointPrefab);
+        var patrolPointInstance = Instantiate(_patrolPointPrefab, null);
 
         NavMeshQueryFilter queryFilter = new NavMeshQueryFilter();
         queryFilter.agentTypeID = 0;
@@ -59,13 +60,13 @@ public class Bootstrap : MonoBehaviour
 
         _character.Initialize(characterHealthMediator);
 
-        ClickToMoveController playerMoveController = new ClickToMoveController(_clickHandler, _character, _character, _character, queryFilter);
+        ClickToMoveController playerMoveController = new ClickToMoveController(_clickHandler, queryFilter, _character, _character);
 
         Pointer pointer = Instantiate(_pointerPrefab);
         pointer.Initialize(playerMoveController);
 
         DirectionalMovableAutoPatrolController playerAutoPatrolController =
-            new DirectionalMovableAutoPatrolController(_character, queryFilter, 15f, 0.5f, 0.2f, patrolPointPrefabInstance);
+            new DirectionalMovableAutoPatrolController(queryFilter, 15f, 0.5f, 0.2f, _character, null, null, patrolPointInstance);
 
         _characterController = new CompositeController(playerMoveController,
                                                        playerAutoPatrolController,
@@ -74,7 +75,7 @@ public class Bootstrap : MonoBehaviour
 
         _characterHealthBarView?.Initialize(_character);
 
-        _movementHandler = new MovementControllerHandler(playerInput, playerMoveController, playerAutoPatrolController, _idleBehaviourSwitchTime);
+        _characterMovementHandler = new MovementControllerHandler(playerInput, playerMoveController, playerAutoPatrolController, _idleBehaviourSwitchTime);
 
         #endregion
 
@@ -85,18 +86,24 @@ public class Bootstrap : MonoBehaviour
 
         _agentCharacter.Initialize(agentCharacterHealthMediator);
 
-        ClickToMoveController agentPlayerMoveController = new ClickToMoveController(_clickHandler, _agentCharacter, _agentCharacter, _agentCharacter, queryFilter);
+        _agentCharacterJumpView = new AgentCharacterJumpView(_agentCharacterAnimator, _agentCharacter);
+
+        ClickToMoveController agentPlayerMoveController = new ClickToMoveController(_clickHandler, queryFilter, _agentCharacter, _agentCharacter, _agentCharacter);
 
         Pointer agentPointer = Instantiate(_pointerPrefab);
         agentPointer.Initialize(agentPlayerMoveController);
 
-        _agentCharacterJumpView = new AgentCharacterJumpView(_agentCharacterAnimator, _agentCharacter);
+        DirectionalMovableAutoPatrolController agentPlayerAutoPatrolController =
+            new DirectionalMovableAutoPatrolController(queryFilter, 15f, 0.5f, 0, _agentCharacter, _agentCharacter, _agentCharacter, patrolPointInstance);
 
         _agentCharacterController = new CompositeController(agentPlayerMoveController,
-                                                       new AlongMovableVelocityRotatableController(_agentCharacter, _agentCharacter));
+                                                            agentPlayerAutoPatrolController,
+                                                            new AlongMovableVelocityRotatableController(_agentCharacter, _agentCharacter));
         _agentCharacterController.Enable();
 
         _agentCharacterhealthBarView?.Initialize(_agentCharacter);
+
+        _agentCharacterMovementHandler = new MovementControllerHandler(playerInput, agentPlayerMoveController, agentPlayerAutoPatrolController, _idleBehaviourSwitchTime);
 
         #endregion
 
@@ -152,7 +159,9 @@ public class Bootstrap : MonoBehaviour
 
         _agentEnemyCharacterController.Update(Time.deltaTime);
 
-        _movementHandler.Update(Time.deltaTime);
+        //_characterMovementHandler.Update(Time.deltaTime);
+
+        _agentCharacterMovementHandler.Update(Time.deltaTime);
 
         //_characterView.Update(Time.deltaTime);
 
