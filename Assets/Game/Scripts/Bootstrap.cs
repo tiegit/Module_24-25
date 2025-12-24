@@ -140,7 +140,7 @@ public class Bootstrap : MonoBehaviour
 
         #endregion
 
-        _game = new Game(playerInput, new HealthPackSpawner(_agentCharacter.transform, queryFilter, _halthPackPrefab));
+        _game = new Game(playerInput, new HealthPackSpawner(_agentCharacter.transform, queryFilter, _halthPackPrefab, 2f, this));
 
         _path = new NavMeshPath();
     }

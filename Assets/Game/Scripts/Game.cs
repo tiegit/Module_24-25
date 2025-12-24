@@ -7,13 +7,13 @@
     {
         _playerInput = playerInput;
         _healthPackSpawner = healthPackSpawner;
+
+        _healthPackSpawner.ToggleHealthPackSpawning();
     }
 
     public void CustomUpdate()
     {
-        if (_playerInput.HKeyPressed)
-        {
-            HealthPack healthPack = _healthPackSpawner.TrySpawnHealthPack();
-        }
+        if (_playerInput.FKeyPressed)
+            _healthPackSpawner.ToggleHealthPackSpawning();
     }
 }
