@@ -48,11 +48,10 @@ public class CharacterView : IDamageAnimator, IUpdatable
         else
             StopRunning();
 
-        if (_isCharacterIsInjured == false && _damagable.IsInjured)
+        if (_damagable.IsInjured != _isCharacterIsInjured)
         {
-            _isCharacterIsInjured = true;
-
-            SetInjuredLayer();
+            _isCharacterIsInjured = _damagable.IsInjured;
+            SetInjuredLayer(_isCharacterIsInjured);
         }
 
         if (_isCharacterDead == false && _damagable.IsDead)
@@ -85,12 +84,16 @@ public class CharacterView : IDamageAnimator, IUpdatable
 
     private void StartRunning(float speedRatio) => _animator.SetFloat(WalkingVelocity, speedRatio);
 
-    private void SetInjuredLayer()
+    private void SetInjuredLayer(bool isInjured)
     {
         int layerIndex = _animator.GetLayerIndex(InjuredLayer);
 
         if (layerIndex != -1)
-            _animator.SetLayerWeight(layerIndex, 1);
+        {
+            float weight = isInjured ? 1f : 0f;
+
+            _animator.SetLayerWeight(layerIndex, weight);
+        }
     }
 
     private void DyingAnimation() => _animator.SetBool(IsDying, true);

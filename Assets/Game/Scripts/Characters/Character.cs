@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IDamagable
+public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IDamagable, IHealable
 {
     [SerializeField] private float _maxHealth = 100f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 60f;
@@ -18,8 +18,6 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     private CharacterController _characterController;
     private Rigidbody _rigidbody;
-    private bool _isInjured;
-    private bool _isDead;
 
     public float MaxSpeed => _maxMoveSpeed;
     public float InjuredMoveSpeed => _injuredMoveSpeed;
@@ -30,8 +28,8 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
     public Vector3 Position => transform.position;
     public float CurrentHealthPercent => _health.CurrentHealthPercent;
 
-    public bool IsDead => _isDead;
-    public bool IsInjured => _isInjured;
+    public bool IsDead { get; private set; }
+    public bool IsInjured { get; private set; }
 
     public void Initialize(HealthMediator healthMediator)
     {
@@ -57,17 +55,22 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     private void Update()
     {
-        if (_isDead == false && _health.CurrentHealth <= 0)
-            SetDeathState(true);
-
-        if (_isDead == false && _isInjured == false && CurrentHealthPercent <= _injuredLayerThreshold / 100)
+        if (IsDead == false)
         {
-            SetMoveSpeed(_injuredMoveSpeed);
+            if (_health.CurrentHealth <= 0)
+                SetDeathState(true);
 
-            _isInjured = true;
+            bool desiredInjuredState = CurrentHealthPercent <= _injuredLayerThreshold / 100f;
+
+            if (desiredInjuredState != IsInjured)
+            {
+                IsInjured = desiredInjuredState;
+
+                SetMoveSpeed(IsInjured ? _injuredMoveSpeed : _maxMoveSpeed);
+            }
         }
 
-        if (_isDead || _characterController == null)
+        if (IsDead || _characterController == null)
             return;
 
         _mover?.Update(Time.deltaTime);
@@ -76,7 +79,7 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     private void FixedUpdate()
     {
-        if (_isDead || _rigidbody == null)
+        if (IsDead || _rigidbody == null)
             return;
 
         _mover?.Update(Time.deltaTime);
@@ -87,7 +90,7 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     public void SetDeathState(bool isDead)
     {
-        _isDead = isDead;
+        IsDead = isDead;
 
         StopMove();
 
@@ -99,7 +102,7 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     public void ResumeMove()
     {
-        if (_isDead)
+        if (IsDead)
             return;
 
         _mover.Resume();
@@ -124,4 +127,6 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
         _health.TakeDamage(value);
     }
+
+    public void Heal(int healingAmount) => _health.AddHealth(healingAmount);
 }

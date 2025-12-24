@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IJumper, IDamagable
+public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRotatable, IJumper, IDamagable, IHealable
 {
     [SerializeField] private float _maxHealth = 70f;
     [SerializeField, Range(0f, 100f)] private float _injuredLayerThreshold = 30f;
@@ -21,9 +21,6 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
     private AgentJumper _jumper;
     private Health _health;
 
-    private bool _isInjured;
-    private bool _isDead;
-
     public float MaxSpeed => _maxMoveSpeed;
     public float InjuredMoveSpeed => _injuredMoveSpeed;
 
@@ -36,8 +33,8 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
     public bool InJumpProcess => _jumper.InProcess;
     public float JumpDuration => _jumper.Duration;
 
-    public bool IsDead => _isDead;
-    public bool IsInjured => _isInjured;
+    public bool IsDead { get; private set; }
+    public bool IsInjured { get; private set; }
 
     public void Initialize(HealthMediator healthMediator)
     {
@@ -55,14 +52,19 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
     {
         _rotator.Update(Time.deltaTime);
 
-        if (_isDead == false && _health.CurrentHealth <= 0)
-            SetDeathState(true);
-
-        if (_isDead == false && _isInjured == false && CurrentHealthPercent <= _injuredLayerThreshold / 100)
+        if (IsDead == false)
         {
-            SetMoveSpeed(_injuredMoveSpeed);
+            if (_health.CurrentHealth <= 0)
+                SetDeathState(true);
 
-            _isInjured = true;
+            bool desiredInjuredState = CurrentHealthPercent <= _injuredLayerThreshold / 100f;
+
+            if (desiredInjuredState != IsInjured)
+            {
+                IsInjured = desiredInjuredState;
+
+                SetMoveSpeed(IsInjured ? _injuredMoveSpeed : _maxMoveSpeed);
+            }
         }
     }
 
@@ -72,30 +74,20 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
     {
         StopMove();
 
-        _isDead = isDead;
+        IsDead = isDead;
     }
 
     public void StopMove() => _mover.Stop();
 
     public void ResumeMove()
     {
-        if (_isDead)
+        if (IsDead)
             return;
 
         _mover.Resume();
     }
 
-    public void SetMoveDirection(Vector3 inputDirection)
-    {
-        if (inputDirection == Vector3.zero)
-            StopMove();
-        else
-            ResumeMove();
-
-        Debug.Log($"{inputDirection}");
-
-        SetDestination(inputDirection);
-    }
+    public void SetMoveDirection(Vector3 inputDirection) => SetDestination(inputDirection); // тут inputDirection не совсем так должен называться, но я сделал чтобы и в Character это был сырой(не нормализованный) вектор
 
     public void SetRotationDirection(Vector3 inputDirection) => _rotator.SetInputDirection(inputDirection);
 
@@ -105,6 +97,8 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
 
         _health.TakeDamage(value);
     }
+
+    public void Heal(int healingAmount) => _health.AddHealth(healingAmount);
 
     public bool TryGetPath(Vector3 targetPosition, NavMeshPath pathToTarget)
         => NavMeshUtils.TryGetPath(_agent, targetPosition, pathToTarget);
@@ -125,7 +119,7 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
 
     public void Jump(OffMeshLinkData offMeshLinkData)
     {
-        if (_isDead)
+        if (IsDead)
             return;
 
         _jumper.Jump(offMeshLinkData);

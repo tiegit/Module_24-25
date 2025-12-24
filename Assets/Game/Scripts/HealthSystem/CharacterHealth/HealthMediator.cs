@@ -5,4 +5,9 @@ public class HealthMediator
     public HealthMediator(IDamageAnimator characterView) => _characterView = characterView;
 
     public void TakeDamage() => _characterView.TakeDamage();
+
+    public void Heal()
+    {
+        //TODO можно добавить анимацию
+    }
 }

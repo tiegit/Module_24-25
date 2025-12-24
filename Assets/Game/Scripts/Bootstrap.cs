@@ -9,6 +9,7 @@ public class Bootstrap : MonoBehaviour
     [SerializeField, Space(20)] private Character _character;
     [SerializeField] private Animator _characterAnimator;
     [SerializeField, Space(5)] private HealthBarView _characterHealthBarView;
+    [SerializeField] private HealthPack _halthPackPrefab;
 
     [SerializeField, Space(20)] private AgentCharacter _agentCharacter;
     [SerializeField] private Animator _agentCharacterAnimator;
@@ -41,6 +42,7 @@ public class Bootstrap : MonoBehaviour
 
     private NavMeshPath _path;
     private PlayerClickInputHandler _clickHandler;
+    private Game _game;
 
     private void Awake()
     {
@@ -138,6 +140,8 @@ public class Bootstrap : MonoBehaviour
 
         #endregion
 
+        _game = new Game(playerInput, new HealthPackSpawner(_agentCharacter.transform, queryFilter, _halthPackPrefab));
+
         _path = new NavMeshPath();
     }
 
@@ -172,6 +176,8 @@ public class Bootstrap : MonoBehaviour
 
         _agentEnemyCharacterView.Update(Time.deltaTime);
         _agentEnemyCharacterJumpView.Update(Time.deltaTime);
+
+        _game.CustomUpdate();
     }
 
     private void OnDrawGizmosSelected()

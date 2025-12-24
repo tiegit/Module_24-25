@@ -11,4 +11,6 @@ public class PlayerInput
 
     public float HorizontalInput => Input.GetAxisRaw(Horizontal);
     public float Verticalinput => Input.GetAxisRaw(Vertical);
+
+    public bool HKeyPressed => Input.GetKeyDown(KeyCode.H);
 }

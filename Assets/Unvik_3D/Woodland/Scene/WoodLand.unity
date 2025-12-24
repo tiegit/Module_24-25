@@ -656,7 +656,7 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 0.2
-  m_Center: {x: 0, y: 1.4, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &67117583
 GameObject:
   m_ObjectHideFlags: 0
@@ -1954,6 +1954,8 @@ MonoBehaviour:
   _character: {fileID: 1799700072}
   _characterAnimator: {fileID: 346691366}
   _characterHealthBarView: {fileID: 1603191811}
+  _halthPackPrefab: {fileID: 6864796161866869731, guid: a9778b3e569262e47805f7d4be8a69e1,
+    type: 3}
   _agentCharacter: {fileID: 1218882238}
   _agentCharacterAnimator: {fileID: 652482086}
   _agentCharacterhealthBarView: {fileID: 1334467323}
@@ -4929,7 +4931,7 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 0.2
-  m_Center: {x: 0, y: 0.75, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &1218882241
 Transform:
   m_ObjectHideFlags: 0
@@ -6765,7 +6767,7 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 0.2
-  m_Center: {x: 0, y: 1.4, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &1691529681
 PrefabInstance:
   m_ObjectHideFlags: 0

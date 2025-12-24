@@ -53,6 +53,7 @@ public class DirectionalMovableAgroController : Controller
             {
                 _movable.ResumeMove();
                 _movable.SetMoveDirection(_pathToTarget.corners[TargetCornerIndex] - _pathToTarget.corners[StartCornerIndex]);
+
                 return;
             }
 

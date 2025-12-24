@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public class Health
 {
     private HealthMediator _mediator;
@@ -19,6 +21,15 @@ public class Health
         ChangeHealth(-value);
 
         _mediator.TakeDamage();
+    }
+
+    public void AddHealth(int healingAmount)
+    {
+        if (healingAmount < 0)
+            return;
+
+        ChangeHealth(healingAmount);
+        _mediator.Heal();
     }
 
     private void ChangeHealth(float value)

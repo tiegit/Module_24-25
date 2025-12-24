@@ -98,12 +98,14 @@ public class DirectionalMovableAutoPatrolController : Controller
         if (!IdleTimerIsUp())
         {
             _movable.StopMove();
+
             return;
         }
 
         if (_patrolPath.corners.Length == 0)
         {
             ResetPatrol();
+
             return;
         }
 
@@ -132,6 +134,7 @@ public class DirectionalMovableAutoPatrolController : Controller
 
             Vector3 nextCorner = _patrolPath.corners[_currentCornerIndex];
 
+            _movable.ResumeMove();
             _movable.SetMoveDirection(nextCorner);
 
             UpdatePatrolPointVisualization();
@@ -165,36 +168,19 @@ public class DirectionalMovableAutoPatrolController : Controller
 
         Vector3 startPosition = _movable.Position;
 
-        for (int i = 0; i < MaxAttempts; i++)
+        if (NavMeshUtils.TryFindRandomNavMeshPoint(startPosition, _patrolRadius, MinEdgeDistance, MaxAttempts, _queryFilter, out _currentPatrolPoint, out _patrolPath))
         {
-            Vector2 randomCircle = Random.insideUnitCircle * _patrolRadius;
-            Vector3 randomOffset = new Vector3(randomCircle.x, 0, randomCircle.y);
-            Vector3 potentialPoint = startPosition + randomOffset;
+            _currentCornerIndex = 0;
+            _stuckTimer = StuckCheckInterval;
 
-            if (NavMesh.SamplePosition(potentialPoint, out NavMeshHit hit, _patrolRadius, _queryFilter.areaMask))
-            {
-                if (NavMesh.FindClosestEdge(hit.position, out NavMeshHit edgeHit, _queryFilter.areaMask))
-                {
-                    if (edgeHit.distance >= MinEdgeDistance)
-                    {
-                        if (NavMeshUtils.TryGetPath(startPosition, hit.position, _queryFilter, _patrolPath)
-                            && _patrolPath.status == NavMeshPathStatus.PathComplete)
-                        {
-                            _currentPatrolPoint = hit.position;
-                            _currentCornerIndex = 0;
-                            _stuckTimer = StuckCheckInterval;
+            _lastTargetDistance = Vector3.Distance(startPosition, _currentPatrolPoint);
 
-                            _lastTargetDistance = Vector3.Distance(startPosition, _currentPatrolPoint);
-
-                            UpdatePatrolPointVisualization();
-                            return;
-                        }
-                    }
-                }
-            }
+            UpdatePatrolPointVisualization();
         }
-
-        ResetPatrol();
+        else
+        {
+            ResetPatrol();
+        }
     }
 
     private void UpdatePatrolPointVisualization()
@@ -215,6 +201,7 @@ public class DirectionalMovableAutoPatrolController : Controller
             _idleTimer = _timeForIdle;
             GenerateNewPatrolPoint();
             _movable.StopMove();
+
             return;
         }
     }
