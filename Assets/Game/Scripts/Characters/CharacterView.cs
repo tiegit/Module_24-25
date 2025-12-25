@@ -5,6 +5,7 @@ using UnityEngine;
 public class CharacterView : IDamageAnimator, IUpdatable
 {
     private const string HitToBodyAnimationName = "Hit To Body";
+    private const string EdgeKey = "_Edge";
 
     private readonly int WalkingVelocity = Animator.StringToHash("Velocity");
     private readonly int IsExploded = Animator.StringToHash("IsExploded");
@@ -19,14 +20,21 @@ public class CharacterView : IDamageAnimator, IUpdatable
     private bool _isCharacterIsInjured;
     private bool _isCharacterDead;
     private MonoBehaviour _coroutineRunner;
+    private SkinnedMeshRenderer[] _renderers;
+
     private float _hitToBodyClipLength;
 
-    public CharacterView(Animator animator, IMovable movable, IDamagable damagable, MonoBehaviour coroutineRunner)
+    public CharacterView(Animator animator,
+                         IMovable movable,
+                         IDamagable damagable,
+                         MonoBehaviour coroutineRunner)
     {
         _movable = movable;
         _damagable = damagable;
         _animator = animator;
         _coroutineRunner = coroutineRunner;
+
+        _renderers = _animator.GetComponentsInChildren<SkinnedMeshRenderer>();
 
         AnimationClip[] clips = _animator.runtimeAnimatorController.animationClips;
 
@@ -43,6 +51,9 @@ public class CharacterView : IDamageAnimator, IUpdatable
 
     public void Update(float deltaTime)
     {
+        if (_movable.InSpawnProcess(out float elapsedTime))
+            SetFloatFor(_renderers, EdgeKey, 1f - elapsedTime / _movable.TimeToSpawn);
+
         if (_movable.CurrentHorizontalVelocity.magnitude > 0.05f)
             StartRunning(_movable.CurrentHorizontalVelocity.magnitude / _movable.MaxSpeed);
         else
@@ -65,20 +76,20 @@ public class CharacterView : IDamageAnimator, IUpdatable
     public void TakeDamage()
     {
         _animator.SetTrigger(IsExploded);
-        _coroutineRunner.StartCoroutine(WaitForHitAnimationAndResume());
+        _coroutineRunner.StartCoroutine(TakingDamage());
     }
 
-    private IEnumerator WaitForHitAnimationAndResume()
+    private IEnumerator TakingDamage()
     {
+        _movable.SetDamageStatus(true);
+
         while (_animator.GetCurrentAnimatorStateInfo(0).IsName(HitToBodyAnimationName) == false)
             yield return null;
 
         yield return new WaitForSeconds(_hitToBodyClipLength);
 
-        ResumeMove();
+        _movable.SetDamageStatus(false);
     }
-
-    private void ResumeMove() => _movable.ResumeMove();
 
     private void StopRunning() => _animator.SetFloat(WalkingVelocity, 0);
 
@@ -96,5 +107,31 @@ public class CharacterView : IDamageAnimator, IUpdatable
         }
     }
 
-    private void DyingAnimation() => _animator.SetBool(IsDying, true);
+    private void DyingAnimation()
+    {
+        _animator.SetBool(IsDying, true);
+        _coroutineRunner.StartCoroutine(Disappearing());
+    }
+
+    private IEnumerator Disappearing()
+    {
+        float elapsedTime = 0f;
+
+        while (elapsedTime < _movable.TimeDeathDisappear)
+        {
+            elapsedTime += Time.deltaTime;
+
+            SetFloatFor(_renderers, EdgeKey, elapsedTime / _movable.TimeDeathDisappear);
+
+            yield return null;
+        }
+
+        SetFloatFor(_renderers, EdgeKey, 1f);
+    }
+
+    private void SetFloatFor(SkinnedMeshRenderer[] renderers, string key, float param)
+    {
+        foreach (SkinnedMeshRenderer renderer in renderers)
+            renderer.material.SetFloat(key, param);
+    }
 }

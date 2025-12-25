@@ -12,12 +12,17 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
     [SerializeField, Space(15)] private ObstacleChecker _groundChecker;
     [SerializeField] private float _gravityForce;
 
+    [SerializeField, Space(15)] private float _timeToSpawn = 2f;
+    [SerializeField] private float _timeDeathDisappear = 4f;
+
     private DirectionalMover _mover;
     private DirectionalRotator _rotator;
     private Health _health;
 
     private CharacterController _characterController;
     private Rigidbody _rigidbody;
+
+    private Timer _spawnTimer;
 
     public float MaxSpeed => _maxMoveSpeed;
     public float InjuredMoveSpeed => _injuredMoveSpeed;
@@ -28,11 +33,18 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
     public Vector3 Position => transform.position;
     public float CurrentHealthPercent => _health.CurrentHealthPercent;
 
+    public bool IsTakingDamage { get; private set; }
     public bool IsDead { get; private set; }
     public bool IsInjured { get; private set; }
 
-    public void Initialize(HealthMediator healthMediator)
+    public float TimeToSpawn => _spawnTimer.TimeLimit;
+    public float TimeDeathDisappear => _timeDeathDisappear;
+
+    public void Initialize(MonoBehaviour coroutineRunner, HealthMediator healthMediator)
     {
+        _spawnTimer = new Timer(coroutineRunner);
+        _spawnTimer.StartProcess(_timeToSpawn);
+
         if (TryGetComponent(out CharacterController characterController))
         {
             _mover = new CharacterControllerDirectionalMover(characterController, _maxMoveSpeed, _groundChecker, _gravityForce);
@@ -102,7 +114,7 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
 
     public void ResumeMove()
     {
-        if (IsDead)
+        if (IsDead || IsTakingDamage)
             return;
 
         _mover.Resume();
@@ -128,5 +140,9 @@ public class Character : MonoBehaviour, IDirectionalMovable, IDirectionalRotatab
         _health.TakeDamage(value);
     }
 
+    public void SetDamageStatus(bool isTakingDamage) => IsTakingDamage = isTakingDamage;
+
     public void Heal(int healingAmount) => _health.AddHealth(healingAmount);
+
+    public bool InSpawnProcess(out float elapsedTime) => _spawnTimer.InProcess(out elapsedTime);
 }

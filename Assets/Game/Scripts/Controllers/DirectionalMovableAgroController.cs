@@ -40,6 +40,9 @@ public class DirectionalMovableAgroController : Controller
     {
         _idleTimer -= Time.deltaTime;
 
+        if (_movable.InSpawnProcess(out float elapsedTime))
+            return;
+
         if (NavMeshUtils.TryGetPath(_movable.Position, _target.position, _queryFilter, _pathToTarget))
         {
             float distanceToTarget = NavMeshUtils.GetPathLength(_pathToTarget);

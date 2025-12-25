@@ -1204,10 +1204,10 @@
             "m_Id": "88a0a761cce249479e84c123c5dca5f1"
         },
         {
-            "m_Id": "66059e9af36c42b895ce0efb90dc5cc7"
+            "m_Id": "c13d9abc3f3c408e93bca69b62cfc6dd"
         },
         {
-            "m_Id": "c13d9abc3f3c408e93bca69b62cfc6dd"
+            "m_Id": "66059e9af36c42b895ce0efb90dc5cc7"
         },
         {
             "m_Id": "7ad6230bd50542d4a53ed664d57ee89a"
@@ -1216,10 +1216,10 @@
             "m_Id": "bf59630166144ca39044efcb1d085158"
         },
         {
-            "m_Id": "d5e25b13deee4852a1be7b327c3749b1"
+            "m_Id": "fca6d090a18d4670b368dfa80522f944"
         },
         {
-            "m_Id": "fca6d090a18d4670b368dfa80522f944"
+            "m_Id": "d5e25b13deee4852a1be7b327c3749b1"
         },
         {
             "m_Id": "8cc67e2287df466d92142a8a84194ace"
@@ -2956,7 +2956,7 @@
     "m_DismissedVersion": 0,
     "m_Precision": 0,
     "overrideHLSLDeclaration": false,
-    "hlslDeclarationOverride": 0,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": {
         "r": 0.0,
@@ -3739,7 +3739,7 @@
     "m_DismissedVersion": 0,
     "m_Precision": 0,
     "overrideHLSLDeclaration": false,
-    "hlslDeclarationOverride": 0,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": {
         "r": 2.0,

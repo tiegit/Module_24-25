@@ -14,12 +14,17 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
     [SerializeField, Space(15)] private float _jumpSpeed;
     [SerializeField] private AnimationCurve _jumpCurve;
 
+    [SerializeField, Space(15)] private float _timeToSpawn = 2f;
+    [SerializeField] private float _timeDeathDisappear = 4f;
+
     private NavMeshAgent _agent;
 
     private AgentMover _mover;
     private TransformDirectionalRotator _rotator;
     private AgentJumper _jumper;
     private Health _health;
+
+    private Timer _spawnTimer;
 
     public float MaxSpeed => _maxMoveSpeed;
     public float InjuredMoveSpeed => _injuredMoveSpeed;
@@ -33,11 +38,18 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
     public bool InJumpProcess => _jumper.InProcess;
     public float JumpDuration => _jumper.Duration;
 
+    public bool IsTakingDamage { get; private set; }
     public bool IsDead { get; private set; }
     public bool IsInjured { get; private set; }
 
-    public void Initialize(HealthMediator healthMediator)
+    public float TimeToSpawn => _spawnTimer.TimeLimit;
+    public float TimeDeathDisappear => _timeDeathDisappear;
+
+    public void Initialize(MonoBehaviour coroutineRunner, HealthMediator healthMediator)
     {
+        _spawnTimer = new Timer(coroutineRunner);
+        _spawnTimer.StartProcess(_timeToSpawn);
+
         _agent = GetComponent<NavMeshAgent>();
         _agent.updateRotation = false;
 
@@ -81,13 +93,13 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
 
     public void ResumeMove()
     {
-        if (IsDead)
+        if (IsDead || IsTakingDamage)
             return;
 
         _mover.Resume();
     }
 
-    public void SetMoveDirection(Vector3 inputDirection) => SetDestination(inputDirection); // тут inputDirection не совсем так должен называться, но я сделал чтобы и в Character это был сырой(не нормализованный) вектор
+    public void SetMoveDirection(Vector3 inputDirection) => SetDestination(inputDirection); // тут inputDirection не совсем так должен называться, сделал чтобы и в Character это был сырой(не нормализованный) вектор
 
     public void SetRotationDirection(Vector3 inputDirection) => _rotator.SetInputDirection(inputDirection);
 
@@ -97,6 +109,8 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
 
         _health.TakeDamage(value);
     }
+
+    public void SetDamageStatus(bool isTakingDamage) => IsTakingDamage = isTakingDamage;
 
     public void Heal(int healingAmount) => _health.AddHealth(healingAmount);
 
@@ -126,4 +140,6 @@ public class AgentCharacter : MonoBehaviour, IDirectionalMovable, IDirectionalRo
     }
 
     private void SetDestination(Vector3 position) => _mover.SetDestination(position);
+
+    public bool InSpawnProcess(out float elapsedTime) => _spawnTimer.InProcess(out elapsedTime);
 }

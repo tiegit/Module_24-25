@@ -15,6 +15,7 @@ public class DirectionalMovableAutoPatrolController : Controller
     private float _timeForIdle;
     private IDirectionalMovable _movable;
     private readonly IDirectionalRotatable _rotatable;
+    private readonly IDamagable _damagable;
     private readonly IJumper _jumper;
     private GameObject _patrolPointInstance;
 
@@ -33,11 +34,13 @@ public class DirectionalMovableAutoPatrolController : Controller
                                                   float timeForIdle,
                                                   IDirectionalMovable movable,
                                                   IDirectionalRotatable rotatable,
+                                                  IDamagable damagable,
                                                   IJumper jumper = null,
                                                   GameObject patrolPointInstance = null)
     {
         _movable = movable;
         _rotatable = rotatable;
+        _damagable = damagable;
         _jumper = jumper;
         _queryFilter = queryFilter;
         _patrolRadius = patrolRadius;
@@ -49,8 +52,12 @@ public class DirectionalMovableAutoPatrolController : Controller
     }
 
     protected override void UpdateLogic(float deltaTime)
-    {
+    {        
         _idleTimer -= deltaTime;
+
+        if (_movable.InSpawnProcess(out float elapsedTime))
+            return;
+
         _stuckTimer -= deltaTime;
 
         if (_stuckTimer <= 0)
@@ -164,6 +171,9 @@ public class DirectionalMovableAutoPatrolController : Controller
 
     private void GenerateNewPatrolPoint()
     {
+        if (_damagable.IsDead)
+            return;
+
         _movable.StopMove();
 
         Vector3 startPosition = _movable.Position;

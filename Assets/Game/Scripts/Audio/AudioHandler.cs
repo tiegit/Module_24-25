@@ -14,19 +14,17 @@ public class AudioHandler
 
     private AudioMixer _audioMixer;
 
-    public AudioHandler(AudioMixer audioMixer)
-    {
-        _audioMixer = audioMixer;
-    }
+    public AudioHandler(AudioMixer audioMixer) => _audioMixer = audioMixer;
 
-    public bool IsMusicOn() => IsVolumeOn(MusicKey);
-    public bool IsSoundOn() => IsVolumeOn(SoundsKey);
+    public bool IsMusicOn => IsVolumeOn(MusicKey);
+    public bool IsSoundOn => IsVolumeOn(SoundsKey);
+    public bool IsMute => !IsMusicOn && !IsSoundOn;
 
     public void OffMusic() => OffVolume(MusicKey);
-    public void OnMusic()=> OnVolume(MusicKey);
+    public void OnMusic() => OnVolume(MusicKey);
 
     public void OffSounds() => OffVolume(SoundsKey);
-    public void OnSounds()=> OnVolume(SoundsKey);
+    public void OnSounds() => OnVolume(SoundsKey);
 
     public void SwitchToDefeatEffect()
     {

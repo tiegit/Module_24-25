@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Audio;
 
 public class Bootstrap : MonoBehaviour
 {
@@ -22,6 +23,10 @@ public class Bootstrap : MonoBehaviour
     [SerializeField] private Animator _agentEnemyCharacterAnimator;
     [SerializeField, Space(5)] private HealthBarView _agentEnemyHealthBarView;
     [SerializeField, Space(5)] private float _idleBehaviourSwitchTime = 4f;
+
+    [SerializeField, Space(20)] private AudioController _audioController;
+    [SerializeField] private AudioHandlerView _audioHandlerView;
+    [SerializeField] private AudioMixer _audioMixer;
 
     private Controller _characterController;
     private Controller _agentCharacterController;
@@ -60,7 +65,7 @@ public class Bootstrap : MonoBehaviour
         _characterView = new CharacterView(_characterAnimator, _character, _character, this);
         HealthMediator characterHealthMediator = new HealthMediator(_characterView);
 
-        _character.Initialize(characterHealthMediator);
+        _character.Initialize(this, characterHealthMediator);
 
         ClickToMoveController playerMoveController = new ClickToMoveController(_clickHandler, queryFilter, _character, _character);
 
@@ -68,7 +73,7 @@ public class Bootstrap : MonoBehaviour
         pointer.Initialize(playerMoveController);
 
         DirectionalMovableAutoPatrolController playerAutoPatrolController =
-            new DirectionalMovableAutoPatrolController(queryFilter, 15f, 0.5f, 0.2f, _character, null, null, patrolPointInstance);
+            new DirectionalMovableAutoPatrolController(queryFilter, 15f, 0.5f, 0.2f, _character, null, _character, null, patrolPointInstance);
 
         _characterController = new CompositeController(playerMoveController,
                                                        playerAutoPatrolController,
@@ -86,7 +91,7 @@ public class Bootstrap : MonoBehaviour
         _agentCharacterView = new CharacterView(_agentCharacterAnimator, _agentCharacter, _agentCharacter, this);
         HealthMediator agentCharacterHealthMediator = new HealthMediator(_agentCharacterView);
 
-        _agentCharacter.Initialize(agentCharacterHealthMediator);
+        _agentCharacter.Initialize(this, agentCharacterHealthMediator);
 
         _agentCharacterJumpView = new AgentCharacterJumpView(_agentCharacterAnimator, _agentCharacter);
 
@@ -96,7 +101,7 @@ public class Bootstrap : MonoBehaviour
         agentPointer.Initialize(agentPlayerMoveController);
 
         DirectionalMovableAutoPatrolController agentPlayerAutoPatrolController =
-            new DirectionalMovableAutoPatrolController(queryFilter, 15f, 0.5f, 0, _agentCharacter, _agentCharacter, _agentCharacter, patrolPointInstance);
+            new DirectionalMovableAutoPatrolController(queryFilter, 15f, 0.5f, 0, _agentCharacter, _agentCharacter, _agentCharacter, _agentCharacter, patrolPointInstance);
 
         _agentCharacterController = new CompositeController(agentPlayerMoveController,
                                                             agentPlayerAutoPatrolController,
@@ -114,7 +119,7 @@ public class Bootstrap : MonoBehaviour
         _enemyCharacterView = new CharacterView(_enemyCharacterAnimator, _enemyCharacter, _enemyCharacter, this);
         HealthMediator enemyCharacterHealthMediator = new HealthMediator(_enemyCharacterView);
 
-        _enemyCharacter.Initialize(enemyCharacterHealthMediator);
+        _enemyCharacter.Initialize(this, enemyCharacterHealthMediator);
 
         _enemyCharacterController = new CompositeController(new DirectionalMovableAgroController(_enemyCharacter, _character.transform, 10f, 2f, queryFilter, 1f),
                                                             new AlongMovableVelocityRotatableController(_enemyCharacter, _enemyCharacter));
@@ -127,7 +132,7 @@ public class Bootstrap : MonoBehaviour
         _agentEnemyCharacterView = new CharacterView(_agentEnemyCharacterAnimator, _agentEnemyCharacter, _agentEnemyCharacter, this);
         HealthMediator agentEnemyCharacterHealthMediator = new HealthMediator(_agentEnemyCharacterView);
 
-        _agentEnemyCharacter.Initialize(agentEnemyCharacterHealthMediator);
+        _agentEnemyCharacter.Initialize(this, agentEnemyCharacterHealthMediator);
 
         _agentEnemyCharacterJumpView = new AgentCharacterJumpView(_agentEnemyCharacterAnimator, _agentEnemyCharacter);
 
@@ -140,9 +145,19 @@ public class Bootstrap : MonoBehaviour
 
         #endregion
 
-        _game = new Game(playerInput, new HealthPackSpawner(_agentCharacter.transform, queryFilter, _halthPackPrefab, 2f, this));
+        _game = new Game(playerInput, new HealthPackSpawner(_agentCharacter, _agentCharacter, queryFilter, _halthPackPrefab, 2f, this));
 
         _path = new NavMeshPath();
+
+        #region Sounds
+
+        AudioHandler audioHandler = new AudioHandler(_audioMixer);
+
+        _audioController.Initialize(audioHandler);
+
+        _audioHandlerView.Initialize(audioHandler);
+
+        #endregion
     }
 
     private void Start()
@@ -178,6 +193,9 @@ public class Bootstrap : MonoBehaviour
         _agentEnemyCharacterJumpView.Update(Time.deltaTime);
 
         _game.CustomUpdate();
+
+        _audioController.CustomUpdate();
+        _audioHandlerView.CustomUpdate();
     }
 
     private void OnDrawGizmosSelected()

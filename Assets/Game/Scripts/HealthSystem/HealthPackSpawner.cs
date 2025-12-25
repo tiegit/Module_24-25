@@ -4,7 +4,8 @@ using UnityEngine.AI;
 
 public class HealthPackSpawner
 {
-    private Transform _playerTransform;
+    private IMovable _movable;
+    private readonly IDamagable _damagable;
     private NavMeshQueryFilter _queryFilter;
     private HealthPack _healthPackPrefab;
     private readonly float _spawnInterval;
@@ -13,9 +14,10 @@ public class HealthPackSpawner
     private bool _canHealthPackSpawn;
     private Coroutine _healthPackSpawnCoroutine;
 
-    public HealthPackSpawner(Transform playerTransform, NavMeshQueryFilter queryFilter, HealthPack healthPackPrefab, float spawnInterval, MonoBehaviour coroutineRunner)
+    public HealthPackSpawner(IMovable movable, IDamagable damagable, NavMeshQueryFilter queryFilter, HealthPack healthPackPrefab, float spawnInterval, MonoBehaviour coroutineRunner)
     {
-        _playerTransform = playerTransform;
+        _movable = movable;
+        _damagable = damagable;
         _queryFilter = queryFilter;
         _healthPackPrefab = healthPackPrefab;
         _spawnInterval = spawnInterval;
@@ -51,7 +53,7 @@ public class HealthPackSpawner
 
     private IEnumerator HealthPackSpawnCoroutine()
     {
-        while (_canHealthPackSpawn)
+        while (_canHealthPackSpawn || _damagable.IsDead == false)
         {
             yield return new WaitForSeconds(_spawnInterval);
             TrySpawnHealthPack();
@@ -60,7 +62,7 @@ public class HealthPackSpawner
 
     private void TrySpawnHealthPack()
     {
-        if (NavMeshUtils.TryFindRandomNavMeshPoint(_playerTransform.position, 3f, 0.5f, 10, _queryFilter, out Vector3 spawnPoint, out NavMeshPath path))
+        if (NavMeshUtils.TryFindRandomNavMeshPoint(_movable.Position, 3f, 0.5f, 10, _queryFilter, out Vector3 spawnPoint, out NavMeshPath path))
             Object.Instantiate(_healthPackPrefab, spawnPoint, Quaternion.identity);
     }
 }
