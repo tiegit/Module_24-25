@@ -31,4 +31,15 @@ public class HealthPack : MonoBehaviour
 
         Destroy(gameObject);
     }
+
+    private void OnDrawGizmos()
+    {
+        Collider collider = GetComponent<Collider>();
+
+        if (collider is SphereCollider sphereCollider)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(transform.position, sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z));
+        }
+    }
 }

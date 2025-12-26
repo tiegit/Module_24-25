@@ -1,31 +1,29 @@
 using System.Collections;
 using UnityEngine;
 
-[RequireComponent (typeof(SphereCollider))]
+[RequireComponent(typeof(SphereCollider))]
 public class Mine : MonoBehaviour
 {
+    private const string IsActivated = "_IsActivated";
+
     [SerializeField] private float _activationRadius = 1f;
     [SerializeField] private float _explosionRadius = 3f;
     [SerializeField] private float _damage = 30f;
     [SerializeField] private float _explosionDelay = 2f;
-    [SerializeField] private float _blinkSpeed = 5f;
-    [SerializeField] private Renderer _mineRenderer;
+
     [SerializeField] private GameObject _explosionEffect;
 
     private SphereCollider _collider;
 
-    private Color _originalColor;
-
     private Coroutine _mineActivationCourutine;
-    private Coroutine _blinkCoroutine;
+    private MeshRenderer _renderer;
 
     private void Awake()
     {
         _collider = GetComponent<SphereCollider>();
         _collider.radius = _activationRadius;
 
-        if (_mineRenderer != null)        
-            _originalColor = _mineRenderer.material.color;        
+        _renderer = GetComponentInChildren<MeshRenderer>();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -36,35 +34,18 @@ public class Mine : MonoBehaviour
 
     private IEnumerator ActivateMine()
     {
-        _blinkCoroutine = StartCoroutine(BlinkCoroutine());
+        _renderer.material.SetInt(IsActivated, 1);
 
-        yield return _blinkCoroutine;
-
-        _blinkCoroutine = null;
-
-        Explode();
-    }
-    
-    private IEnumerator BlinkCoroutine()
-    {
         float elapsedTime = 0f;
 
         while (elapsedTime < _explosionDelay)
         {
-            if (_mineRenderer != null)
-            {
-                float blinkValue = Mathf.PingPong(elapsedTime * _blinkSpeed, 1f);
-                Color blinkColor = Color.Lerp(_originalColor, Color.white, blinkValue);
-                _mineRenderer.material.color = blinkColor;
-            }
-
             elapsedTime += Time.deltaTime;
 
             yield return null;
         }
 
-        if (_mineRenderer != null)
-            _mineRenderer.material.color = _originalColor;
+        Explode();
     }
 
     private void Explode()

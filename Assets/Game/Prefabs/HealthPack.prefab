@@ -96,6 +96,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _healingAmount: 50
+  _lifeTime: 5
   _effectPrefab: {fileID: 0}
 --- !u!1 &7799556134662122102
 GameObject:
@@ -158,7 +159,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 048b26e51938f4443b9fcda934be0359, type: 2}
+  - {fileID: 2100000, guid: 27940488d5aabd048be7ac29eb98b0f1, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
